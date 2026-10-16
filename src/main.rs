@@ -593,6 +593,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         st.primary_books=st.bible.books(st.primary_id()).unwrap_or_default();
                         if !st.visible.contains(&target) { st.visible.push(target); let code=st.translations[target].code.clone(); st.hidden.remove(&code); }
                         refresh_translation_menu(&ui,&st);
+                        refresh_books(&ui,&st);
                     }
                     st.book = hit.book;
                     st.chapter = hit.chapter;
