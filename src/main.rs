@@ -795,6 +795,8 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
 
     // Locked parallel reading is one list of paired verses rather than two
     // lists kept in step, so only the view actually on screen is built.
+    ui.set_third_title(st.extra.first().map(|&i| st.translations[i].name.as_str()).unwrap_or("").into());
+    ui.set_fourth_title(st.extra.get(1).map(|&i| st.translations[i].name.as_str()).unwrap_or("").into());
     // The existing verse-pair model locks two columns; larger groups use
     // independent scrollers rather than silently omitting any translation.
     for slot in 0..2 {
