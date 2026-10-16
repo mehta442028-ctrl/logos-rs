@@ -44,6 +44,17 @@ with tempfile.TemporaryDirectory() as tmp:
             JOIN translations ON translation_id=translations.id
             WHERE code='CITEST' ''').fetchall() == [(1, 1, 1, "Prøvetekst ἀγάπη ברא")]
         assert db.execute("SELECT count(*) FROM verses_fts WHERE verses_fts MATCH 'Prøvetekst'").fetchone()[0] > 0
+    # Automatic offline import must connect a known English word to an
+    # original-language occurrence, never to a lexicon entry absent in verse.
+    english = tmp / "english.docx"
+    with ZipFile(english, "w") as archive:
+        archive.writestr("word/document.xml", '''<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>[[@Bible:Genesis 1:1]] God mysteryword</w:t></w:r></w:p></w:body></w:document>''')
+    subprocess.run(["/usr/bin/leverbe-import-docx", str(english), "CIALIGN", "Alignment test", "en"], env=env, check=True)
+    with sqlite3.connect(personal) as db:
+        row = db.execute("SELECT w.strongs FROM words w JOIN translations t ON t.id=w.translation_id WHERE t.code='CIALIGN' AND w.position=0").fetchone()
+        assert row == ("H430",), row
+        assert db.execute("SELECT count(*) FROM personal_word_links p JOIN translations t ON t.id=p.translation_id WHERE t.code='CIALIGN'").fetchone()[0] > 0
+        assert db.execute("SELECT w.strongs FROM words w JOIN translations t ON t.id=w.translation_id WHERE t.code='CIALIGN' AND w.position=1").fetchone() == (None,)
     # Duplicate imports must fail without changing the database.
     personal_before = digest(personal)
     assert subprocess.run(cmd, env=env).returncode != 0

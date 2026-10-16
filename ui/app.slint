@@ -1,4 +1,4 @@
-import { ComboBox, LineEdit, ScrollView, ListView, Palette } from "std-widgets.slint";
+import { ComboBox, LineEdit, ScrollView, ListView, Palette, CheckBox } from "std-widgets.slint";
 
 // ---------------------------------------------------------------------------
 // Theme — all colours derive from a single `dark` switch.
@@ -691,6 +691,11 @@ export component MainWindow inherits Window {
     in-out property <string> import-name;
     in-out property <string> import-lang: "nb";
     in property <string> import-status;
+    in property <bool> import-busy;
+    in property <string> alignment-note;
+    in-out property <bool> import-ai: false;
+    in-out property <string> import-model;
+    in-out property <string> import-limit: "20";
     /// Which entry each picker starts on, so a restored session shows the
     /// text it actually opened.
     in property <int> primary-index;
@@ -762,7 +767,7 @@ export component MainWindow inherits Window {
     callback primary-changed(int);
     callback secondary-changed(int);
     callback toggle-translation-visibility(int);
-    callback import-docx(string, string, string, string);
+    callback import-docx(string, string, string, string, bool, string, string);
     callback extra-changed(int, int);
     callback add-translation();
     callback remove-translation();
@@ -1048,7 +1053,7 @@ export component MainWindow inherits Window {
                         }
                         if root.show-import: Rectangle {
                             background: Theme.panel-alt;
-                            height: 265px;
+                            height: root.import-ai ? 510px : 390px;
                             VerticalLayout {
                                 padding: 7px;
                                 spacing: 5px;
@@ -1060,9 +1065,14 @@ export component MainWindow inherits Window {
                                 LineEdit { text <=> root.import-name; placeholder-text: "Bibelen 1930 (my edition)"; }
                                 Text { text: "Language code: nb, en, grc, hbo"; color: Theme.muted; font-size: 11px; }
                                 LineEdit { text <=> root.import-lang; }
+                                Text { text: "Automatic word connections run after import. Suggestions need review."; color: Theme.muted; font-size: 11px; wrap: word-wrap; }
+                                CheckBox { text: "Use optional AI assistance"; checked <=> root.import-ai; enabled: !root.import-busy; }
+                                if root.import-ai: Text { text: "Sends verse text to OpenAI; API usage is billed. Requires OPENAI_API_KEY."; color: Theme.muted; font-size: 11px; wrap: word-wrap; }
+                                if root.import-ai: LineEdit { text <=> root.import-model; placeholder-text: "OpenAI model name"; }
+                                if root.import-ai: LineEdit { text <=> root.import-limit; placeholder-text: "Maximum AI verses (1–1000)"; }
                                 Pill {
-                                    label: "Import translation";
-                                    clicked => { root.import-docx(root.import-path, root.import-code, root.import-name, root.import-lang); }
+                                    label: root.import-busy ? "Importing and connecting…" : "Import and connect words";
+                                    clicked => { if (!root.import-busy) { root.import-docx(root.import-path, root.import-code, root.import-name, root.import-lang, root.import-ai, root.import-model, root.import-limit); } }
                                 }
                                 Text {
                                     text: root.import-status;
@@ -1356,6 +1366,12 @@ export component MainWindow inherits Window {
                             text: root.word.translit;
                             color: Theme.muted;
                             font-size: 15px;
+                        }
+                        if root.alignment-note != "": Text {
+                            text: root.alignment-note;
+                            color: Theme.muted;
+                            font-size: 12px;
+                            wrap: word-wrap;
                         }
                         if root.word.strongs != "": HorizontalLayout {
                             spacing: 8px;

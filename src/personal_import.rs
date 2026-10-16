@@ -21,6 +21,13 @@ fn parse_book(s: &str) -> Option<i64> {
 pub fn import_docx(
     source_db: &Path, file: &Path, code: &str, name: &str, lang: &str,
 ) -> Result<usize, Box<dyn std::error::Error>> {
+    Ok(import_docx_aligned(source_db, file, code, name, lang, None)?.verses)
+}
+
+pub fn import_docx_aligned(
+    source_db: &Path, file: &Path, code: &str, name: &str, lang: &str,
+    ai: Option<&crate::auto_align::AiConfig>,
+) -> Result<crate::auto_align::Report, Box<dyn std::error::Error>> {
     let code = code.trim().to_uppercase();
     if code.len() < 2 || code.len() > 16 || !code.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_') {
         return Err("Translation code must have 2–16 ASCII letters, digits or underscores".into());
@@ -95,9 +102,10 @@ pub fn import_docx(
         statement.execute(params![tid,book,chapter,verse,value])?;
     }
     drop(statement);
+    let report = crate::auto_align::align(&tx, tid, lang.trim(), ai)?;
+    tx.execute_batch("INSERT INTO verses_fts(verses_fts) VALUES('rebuild');")?;
     tx.commit()?;
-    conn.execute_batch("INSERT INTO verses_fts(verses_fts) VALUES('rebuild');")?;
-    Ok(verses.len())
+    Ok(report)
 }
 
 #[cfg(test)]

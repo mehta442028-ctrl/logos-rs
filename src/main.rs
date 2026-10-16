@@ -421,43 +421,65 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             refresh_reading(&ui, &state);
         });
     }
+    // Keep imports/alignment off the UI thread. The timer only applies a
+    // completed transaction; a failed import never adds a partial translation.
+    let import_poll = slint::Timer::default();
     {
-        let (w, state) = ctx!();
-        let bundled_db = logos_rs::importer::db_path();
-        ui.on_import_docx(move |path, code, name, lang| {
-            let ui = w.unwrap();
-            let source = if bundled_db.is_file() {
-                bundled_db.clone()
-            } else {
-                logos_rs::personal_import::personal_db_path().unwrap_or_default()
-            };
-            match logos_rs::personal_import::import_docx(
-                &source, std::path::Path::new(path.as_str()),
-                code.as_str(), name.as_str(), lang.as_str(),
-            ) {
-                Ok(count) => {
-                    let result = (|| -> Result<(), Box<dyn std::error::Error>> {
-                        let db = logos_rs::personal_import::personal_db_path()?;
-                        let mut st = state.borrow_mut();
-                        st.bible = Bible::open(&db)?;
+        type ImportResult = Result<logos_rs::auto_align::Report, String>;
+        let pending = Rc::new(RefCell::new(None::<std::sync::mpsc::Receiver<ImportResult>>));
+        let (w, state_for_poll) = ctx!();
+        let receiver = pending.clone();
+        import_poll.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(200), move || {
+            let result = receiver.borrow().as_ref().and_then(|rx| match rx.try_recv() {
+                Ok(r) => Some(r),
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => Some(Err("Import worker stopped; no partial translation was saved".into())),
+                Err(_) => None,
+            });
+            let Some(result) = result else { return };
+            *receiver.borrow_mut() = None;
+            let Some(ui) = w.upgrade() else { return };
+            ui.set_import_busy(false);
+            match result {
+                Ok(report) => {
+                    let loaded = (|| -> Result<(), Box<dyn std::error::Error>> {
+                        let mut st = state_for_poll.borrow_mut();
+                        st.bible = Bible::open(&logos_rs::personal_import::personal_db_path()?)?;
                         st.translations = st.bible.translations()?;
                         st.visible = (0..st.translations.len()).filter(|&i|
                             !st.hidden.contains(&st.translations[i].code)
-                            || st.primary == i || st.secondary == i || st.extra.contains(&i)
-                        ).collect();
+                            || st.primary == i || st.secondary == i || st.extra.contains(&i)).collect();
                         refresh_translation_menu(&ui, &st);
                         Ok(())
                     })();
-                    match result {
-                        Ok(()) => {
-                            ui.set_import_status(format!("Imported {count} verses successfully.").into());
-                            refresh_reading(&ui, &state);
-                        },
+                    match loaded {
+                        Ok(()) => { ui.set_import_status(report.to_string().into()); refresh_reading(&ui, &state_for_poll); },
                         Err(e) => ui.set_import_status(format!("Saved; restart app to load: {e}").into()),
                     }
-                }
+                },
                 Err(e) => ui.set_import_status(format!("Import failed: {e}").into()),
             }
+        });
+        let w = ui.as_weak();
+        let bundled_db = logos_rs::importer::db_path();
+        ui.on_import_docx(move |path, code, name, lang, use_ai, model, limit| {
+            let ui = w.unwrap();
+            if pending.borrow().is_some() { return; }
+            let ai = if use_ai {
+                let config = limit.parse::<usize>().map_err(|_| "AI verse limit must be a number".to_string())
+                    .and_then(|n| logos_rs::auto_align::AiConfig::from_env(model.as_str(), n).map_err(|e| e.to_string()));
+                match config { Ok(c) => Some(c), Err(e) => { ui.set_import_status(e.into()); return; } }
+            } else { None };
+            let source = if bundled_db.is_file() { bundled_db.clone() }
+                else { logos_rs::personal_import::personal_db_path().unwrap_or_default() };
+            let (tx, rx) = std::sync::mpsc::channel();
+            *pending.borrow_mut() = Some(rx);
+            ui.set_import_busy(true);
+            ui.set_import_status("Importing and connecting words. You can keep reading; leave the app open until this finishes.".into());
+            std::thread::spawn(move || {
+                let result = logos_rs::personal_import::import_docx_aligned(&source, std::path::Path::new(path.as_str()),
+                    code.as_str(), name.as_str(), lang.as_str(), ai.as_ref()).map_err(|e| e.to_string());
+                let _ = tx.send(result);
+            });
         });
     }
     {
@@ -604,7 +626,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut originals_label = String::new();
             let mut originals: Vec<OriginalWord> = Vec::new();
             let mut parsing = word.parsing.clone();
-            if is_translation && !word.strongs.is_empty() {
+            let personal = st.bible.personal_word_links(trans.id, &word).ok().flatten();
+            ui.set_alignment_note(personal.as_ref().map(|(_,note)| note.as_str()).unwrap_or("").into());
+            if let Some((ws,_)) = &personal {
+                originals = ws.iter().map(|o| OriginalWord { text:o.text.clone().into(), parsing:o.parsing.clone().into() }).collect();
+                if let Some(first) = ws.first() { parsing = first.parsing.clone(); }
+                if !ws.is_empty() { originals_label = "Suggested original-language connection".into(); }
+            }
+            if personal.is_none() && is_translation && !word.strongs.is_empty() {
                 let orig_code = if is_ot { "WLC" } else { "SBLGNT" };
                 if let Some(ot) = st.translations.iter().find(|t| t.code == orig_code) {
                     let ws = st

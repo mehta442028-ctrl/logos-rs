@@ -206,3 +206,35 @@ leverbe-import-docx "/home/user/Documents/bible.docx" MYCODE "My translation" nb
 
 Use **Manage translations** to hide/show translations in the dropdown menus.
 Currently selected translations cannot be hidden.
+
+
+### Automatic connections for imported DOCX translations
+
+New imports automatically receive **unreviewed word-alignment suggestions**.
+Every word becomes clickable; suggested connections open the matching Greek or
+Hebrew occurrences from that same verse. Words without reliable evidence remain
+unlinked. Bundled editorial tags and existing imports are unchanged.
+
+Offline mode uses same-language tagged reference words, English lexicon glosses,
+and repeated verse-level co-occurrence. Its coverage and accuracy depend on the
+translation and document size. Small Norwegian samples often provide too little
+evidence; importing a full translation helps. These are suggestions, not an
+expert-reviewed reverse interlinear. Verse-number differences can reduce coverage.
+
+Optional AI assistance is off by default. In **Import Bible**, select it, enter an
+OpenAI model supporting Structured Outputs, and set the maximum number of verses
+(default 20, maximum 1000). The app sends those verses' translated tokens and
+original words/definitions to OpenAI; API usage is billed separately. It never
+uploads the DOCX file or calls AI in offline mode. The request uses `store: false`.
+Configure `OPENAI_API_KEY` in the app's launch environment; the app does not write
+the key to its database or settings. Do not put keys in shared scripts or documents.
+The model's confidence score is not a guarantee of accuracy. All generated links
+remain marked as unreviewed, including AI links.
+
+CLI offline import uses the same automatic process. To enable AI explicitly, add
+`--ai` and configure `OPENAI_API_KEY`, `LEVERBE_ALIGNMENT_MODEL`, and optionally
+`LEVERBE_AI_MAX_VERSES`. If AI fails, the import keeps offline suggestions and
+reports the interruption. Imports run in a database transaction; keep the app
+open until the completion message. AI mode processes at most the selected limit
+of eligible verses; the rest retain offline suggestions. Unusually long verses
+are kept local. Existing imported translations are not silently reprocessed.

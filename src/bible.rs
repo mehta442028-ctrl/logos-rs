@@ -202,6 +202,26 @@ impl Bible {
 
     /// Original-language words carrying a given Strong's number in one verse
     /// (used to resolve an English word back to its Hebrew/Greek word).
+    /// Personal import suggestions use exact in-verse source positions and
+    /// remain distinct from the bundled, editorially tagged texts.
+    pub fn personal_word_links(&self, tid: i64, word: &Word) -> rusqlite::Result<Option<(Vec<Word>, String)>> {
+        let exists: bool = self.conn.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='personal_alignment_imports')", [], |r| r.get(0))?;
+        if !exists { return Ok(None); }
+        let imported: bool = self.conn.query_row("SELECT EXISTS(SELECT 1 FROM personal_alignment_imports WHERE translation_id=?1)",[tid], |r| r.get(0))?;
+        if !imported { return Ok(None); }
+        let query = format!("{WORD_SELECT} JOIN personal_word_links p ON p.source_translation_id=w.translation_id AND p.book=w.book AND p.chapter=w.chapter AND p.verse=w.verse AND p.source_position=w.position WHERE p.translation_id=?1 AND p.book=?2 AND p.chapter=?3 AND p.verse=?4 AND p.target_position=?5 ORDER BY w.position");
+        let args = rusqlite::params![tid,word.book,word.chapter,word.verse,word.position];
+        let mut stmt = self.conn.prepare(&query)?;
+        let words: Vec<Word> = stmt.query_map(args, map_word)?.collect::<rusqlite::Result<_>>()?;
+        let note = if words.is_empty() { "No reliable automatic connection found for this word.".to_string() }
+            else {
+                let method: String = self.conn.query_row("SELECT method FROM personal_word_links WHERE translation_id=?1 AND book=?2 AND chapter=?3 AND verse=?4 AND target_position=?5 LIMIT 1",
+                    rusqlite::params![tid,word.book,word.chapter,word.verse,word.position], |r| r.get(0))?;
+                format!("Unreviewed automatic suggestion ({}). Check the verse context.", if method == "ai-suggestion" { "AI-assisted" } else { "offline" })
+            };
+        Ok(Some((words,note)))
+    }
+
     pub fn words_with_strongs(
         &self,
         translation_id: i64,

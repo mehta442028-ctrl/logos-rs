@@ -11,3 +11,5 @@ pub mod search;
 pub mod session;
 
 pub mod personal_import;
+
+pub mod auto_align;
