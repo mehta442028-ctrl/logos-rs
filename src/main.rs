@@ -423,6 +423,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     {
         let (w, state) = ctx!();
+        let bundled_db = logos_rs::importer::db_path();
+        ui.on_import_docx(move |path, code, name, lang| {
+            let ui = w.unwrap();
+            let source = if bundled_db.is_file() {
+                bundled_db.clone()
+            } else {
+                logos_rs::personal_import::personal_db_path().unwrap_or_default()
+            };
+            match logos_rs::personal_import::import_docx(
+                &source, std::path::Path::new(path.as_str()),
+                code.as_str(), name.as_str(), lang.as_str(),
+            ) {
+                Ok(count) => {
+                    let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+                        let db = logos_rs::personal_import::personal_db_path()?;
+                        let mut st = state.borrow_mut();
+                        st.bible = Bible::open(&db)?;
+                        st.translations = st.bible.translations()?;
+                        st.visible = (0..st.translations.len()).filter(|&i|
+                            !st.hidden.contains(&st.translations[i].code)
+                            || st.primary == i || st.secondary == i || st.extra.contains(&i)
+                        ).collect();
+                        refresh_translation_menu(&ui, &st);
+                        Ok(())
+                    })();
+                    match result {
+                        Ok(()) => {
+                            ui.set_import_status(format!("Imported {count} verses successfully.").into());
+                            refresh_reading(&ui, &state);
+                        },
+                        Err(e) => ui.set_import_status(format!("Saved; restart app to load: {e}").into()),
+                    }
+                }
+                Err(e) => ui.set_import_status(format!("Import failed: {e}").into()),
+            }
+        });
+    }
+    {
+        let (w, state) = ctx!();
         ui.on_toggle_translation_visibility(move |index| {
             let ui = w.unwrap();
             let mut st = state.borrow_mut();
