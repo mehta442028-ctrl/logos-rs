@@ -484,6 +484,9 @@ component GlossPane inherits Rectangle {
 component ParallelColumns inherits Rectangle {
     in property <[VerseRow]> rows;
     in property <[VerseRow]> rows2;
+    in property <[VerseRow]> rows3;
+    in property <[VerseRow]> rows4;
+    in property <int> extra-count;
     in property <[PairRow]> pairs;
     in property <bool> parallel;
     in property <bool> scroll-lock;
@@ -501,7 +504,7 @@ component ParallelColumns inherits Rectangle {
         // never from a `width: parent.width / 2` binding: a fixed width is
         // part of an element's layout-info, and reading the parent's width
         // there asks a layout for its output while it is still being solved.
-        if root.parallel: HorizontalLayout {
+        if root.parallel && root.extra-count == 0: HorizontalLayout {
             height: 30px;
             Rectangle {
                 horizontal-stretch: 1;
@@ -530,6 +533,11 @@ component ParallelColumns inherits Rectangle {
             }
         }
 
+        if root.parallel && root.extra-count > 0: Text {
+            text: root.subtitle + "  |  " + root.subtitle2 + "  |  additional translations";
+            color: Theme.muted;
+            font-size: 12px;
+        }
         if !root.parallel: ReadingColumn {
             rows: root.rows;
             column: 0;
@@ -540,7 +548,7 @@ component ParallelColumns inherits Rectangle {
             pick(c, i) => { root.pick(c, i); }
         }
 
-        if root.parallel && root.scroll-lock: PairedColumn {
+        if root.parallel && root.scroll-lock && root.extra-count == 0: PairedColumn {
             rows: root.pairs;
             selected-col: root.selected-col;
             selected-idx: root.selected-idx;
@@ -551,7 +559,7 @@ component ParallelColumns inherits Rectangle {
 
         // Unlocked: two lists, each minding its own scroll position. Nothing
         // keeps them in step, which is the point.
-        if root.parallel && !root.scroll-lock: HorizontalLayout {
+        if root.parallel && (!root.scroll-lock || root.extra-count > 0): HorizontalLayout {
             ReadingColumn {
                 horizontal-stretch: 1;
                 preferred-width: 0px;
@@ -571,6 +579,32 @@ component ParallelColumns inherits Rectangle {
                 min-width: 0px;
                 rows: root.rows2;
                 column: 1;
+                selected-col: root.selected-col;
+                selected-idx: root.selected-idx;
+                nav-epoch: root.nav-epoch;
+                target-index: root.target-index;
+                pick(c, i) => { root.pick(c, i); }
+            }
+            if root.extra-count > 0: Rectangle { width: 1px; background: Theme.border; }
+            if root.extra-count > 0: ReadingColumn {
+                horizontal-stretch: 1;
+                preferred-width: 0px;
+                min-width: 0px;
+                rows: root.rows3;
+                column: 2;
+                selected-col: root.selected-col;
+                selected-idx: root.selected-idx;
+                nav-epoch: root.nav-epoch;
+                target-index: root.target-index;
+                pick(c, i) => { root.pick(c, i); }
+            }
+            if root.extra-count > 1: Rectangle { width: 1px; background: Theme.border; }
+            if root.extra-count > 1: ReadingColumn {
+                horizontal-stretch: 1;
+                preferred-width: 0px;
+                min-width: 0px;
+                rows: root.rows4;
+                column: 3;
                 selected-col: root.selected-col;
                 selected-idx: root.selected-idx;
                 nav-epoch: root.nav-epoch;
@@ -603,6 +637,11 @@ export component MainWindow inherits Window {
     in property <[int]> chapters;
     in property <[VerseRow]> rows;      // primary column
     in property <[VerseRow]> rows2;     // secondary column (parallel, unlocked)
+    in property <[VerseRow]> rows3;
+    in property <[VerseRow]> rows4;
+    in-out property <int> extra-count: 0;
+    in property <int> third-index;
+    in property <int> fourth-index;
     in property <[PairRow]> pairs;      // both columns as one list (locked)
     in property <[SearchItem]> results;
 
@@ -658,6 +697,9 @@ export component MainWindow inherits Window {
     callback open-result(int);
     callback primary-changed(int);
     callback secondary-changed(int);
+    callback extra-changed(int, int);
+    callback add-translation();
+    callback remove-translation();
     callback toggle-parallel();
     callback toggle-theme();
     callback prev-chapter();
@@ -912,6 +954,23 @@ export component MainWindow inherits Window {
                             selected(v) => { root.secondary-changed(self.current-index); }
                         }
 
+                        if root.parallel: HorizontalLayout {
+                            spacing: 6px;
+                            if root.extra-count < 2: Pill { label: "+ Translation"; clicked => { root.add-translation(); } }
+                            if root.extra-count > 0: Pill { label: "− Translation"; clicked => { root.remove-translation(); } }
+                        }
+                        if root.parallel && root.extra-count > 0: Text { text: "Third translation"; color: Theme.muted; font-size: 11px; }
+                        if root.parallel && root.extra-count > 0: ComboBox {
+                            model: root.translation-labels;
+                            current-index: root.third-index;
+                            selected(v) => { root.extra-changed(0, self.current-index); }
+                        }
+                        if root.parallel && root.extra-count > 1: Text { text: "Fourth translation"; color: Theme.muted; font-size: 11px; }
+                        if root.parallel && root.extra-count > 1: ComboBox {
+                            model: root.translation-labels;
+                            current-index: root.fourth-index;
+                            selected(v) => { root.extra-changed(1, self.current-index); }
+                        }
                         if root.reader && root.reader-available: Text {
                             text: "Gloss words rarer than";
                             color: Theme.muted;
@@ -1105,6 +1164,9 @@ export component MainWindow inherits Window {
                             vertical-stretch: 1;
                             rows: root.rows;
                             rows2: root.rows2;
+                            rows3: root.rows3;
+                            rows4: root.rows4;
+                            extra-count: root.extra-count;
                             pairs: root.pairs;
                             parallel: root.parallel;
                             scroll-lock: root.scroll-lock;
