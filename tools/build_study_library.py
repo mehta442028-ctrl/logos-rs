@@ -54,6 +54,9 @@ def refs(text,default_book=None,default_chapter=None):
 
 def download(source,cache):
     p=cache/source['file'];p.parent.mkdir(parents=True,exist_ok=True)
+    if not p.exists() and source.get("vendored"):
+        # The historical scans are vendored to make builds independent of archive availability.
+        p.write_bytes(gzip.decompress((ROOT/source["vendored"]).read_bytes()))
     if not p.exists():
         errors=[]
         for url in source.get('mirrors',[])+[source['url']]:

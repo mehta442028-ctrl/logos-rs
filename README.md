@@ -270,6 +270,8 @@ Use **A− / A+** in the sidebar to change Bible text size (11–36 px); the set
 is saved between launches. The commentary window has its own text-size controls.
 
 Build library data with `python3 tools/build_study_library.py` before packaging.
+Historical scan texts are vendored as gzip files; SWORD archives are downloaded
+and checksum-verified during the build.
 Sources, SHA-256 pins, editions, notices and SWORD credits are in
 `data/study/sources.json`, also shipped with the package. The separate read-only
 `study-library.db` ensures library updates work even with a personal Bible database.

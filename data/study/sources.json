@@ -101,7 +101,8 @@
           "mirrors": [
             "https://ia800802.us.archive.org/0/items/expositorythough01ryle/expositorythough01ryle_djvu.txt",
             "https://ia600802.us.archive.org/0/items/expositorythough01ryle/expositorythough01ryle_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythough01ryle.txt.gz"
         },
         {
           "file": "expositorythough02ryle.txt",
@@ -112,7 +113,8 @@
           "edition": "1857",
           "mirrors": [
             "https://ia801509.us.archive.org/21/items/expositorythough02ryle/expositorythough02ryle_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythough02ryle.txt.gz"
         },
         {
           "file": "expositorythoug06rylegoog.txt",
@@ -124,7 +126,8 @@
           "mirrors": [
             "https://ia600907.us.archive.org/17/items/expositorythoug06rylegoog/expositorythoug06rylegoog_djvu.txt",
             "https://ia800907.us.archive.org/17/items/expositorythoug06rylegoog/expositorythoug06rylegoog_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythoug06rylegoog.txt.gz"
         },
         {
           "file": "expositorythoug05rylegoog.txt",
@@ -136,7 +139,8 @@
           "mirrors": [
             "https://ia801602.us.archive.org/10/items/expositorythoug05rylegoog/expositorythoug05rylegoog_djvu.txt",
             "https://ia601602.us.archive.org/10/items/expositorythoug05rylegoog/expositorythoug05rylegoog_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythoug05rylegoog.txt.gz"
         },
         {
           "file": "expositorythough05ryle.txt",
@@ -148,7 +152,8 @@
           "mirrors": [
             "https://ia800105.us.archive.org/31/items/expositorythough05ryle/expositorythough05ryle_djvu.txt",
             "https://ia600105.us.archive.org/31/items/expositorythough05ryle/expositorythough05ryle_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythough05ryle.txt.gz"
         },
         {
           "file": "expositorythough06ryle.txt",
@@ -160,7 +165,8 @@
           "mirrors": [
             "https://ia601604.us.archive.org/20/items/expositorythough06ryle/expositorythough06ryle_djvu.txt",
             "https://ia801604.us.archive.org/20/items/expositorythough06ryle/expositorythough06ryle_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythough06ryle.txt.gz"
         },
         {
           "file": "expositorythough07ryle.txt",
@@ -172,7 +178,8 @@
           "mirrors": [
             "https://ia601600.us.archive.org/33/items/expositorythough07ryle/expositorythough07ryle_djvu.txt",
             "https://ia801600.us.archive.org/33/items/expositorythough07ryle/expositorythough07ryle_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositorythough07ryle.txt.gz"
         }
       ]
     },
@@ -192,7 +199,8 @@
           "mirrors": [
             "https://ia800707.us.archive.org/8/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1_djvu.txt",
             "https://ia600707.us.archive.org/8/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1.txt.gz"
         },
         {
           "file": "bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2.txt",
@@ -204,7 +212,8 @@
           "mirrors": [
             "https://ia801906.us.archive.org/19/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2_djvu.txt",
             "https://ia601906.us.archive.org/19/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2.txt.gz"
         }
       ]
     },
@@ -224,7 +233,8 @@
           "mirrors": [
             "https://ia802903.us.archive.org/1/items/expositionofepis184001owen/expositionofepis184001owen_djvu.txt",
             "https://ia902903.us.archive.org/1/items/expositionofepis184001owen/expositionofepis184001owen_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositionofepis184001owen.txt.gz"
         },
         {
           "file": "expositionofepis184002owen.txt",
@@ -236,7 +246,8 @@
           "mirrors": [
             "https://ia800904.us.archive.org/28/items/expositionofepis184002owen/expositionofepis184002owen_djvu.txt",
             "https://ia600904.us.archive.org/28/items/expositionofepis184002owen/expositionofepis184002owen_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositionofepis184002owen.txt.gz"
         },
         {
           "file": "expositionofepis184003owen.txt",
@@ -248,7 +259,8 @@
           "mirrors": [
             "https://ia601608.us.archive.org/27/items/expositionofepis184003owen/expositionofepis184003owen_djvu.txt",
             "https://ia801608.us.archive.org/27/items/expositionofepis184003owen/expositionofepis184003owen_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/expositionofepis184003owen.txt.gz"
         },
         {
           "file": "anexpositionepi01unkngoog.txt",
@@ -260,7 +272,8 @@
           "mirrors": [
             "https://ia903108.us.archive.org/24/items/anexpositionepi01unkngoog/anexpositionepi01unkngoog_djvu.txt",
             "https://ia803108.us.archive.org/24/items/anexpositionepi01unkngoog/anexpositionepi01unkngoog_djvu.txt"
-          ]
+          ],
+          "vendored": "data/study/text/anexpositionepi01unkngoog.txt.gz"
         }
       ]
     }
