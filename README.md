@@ -174,3 +174,35 @@ Database tables: `translations`, `books`, `verses` (+ `verses_fts`),
   no flow layout), so they don't reflow on window resize.
 - No cross-references, notes, or highlighting yet.
 - The database is generated locally rather than bundled.
+
+
+## Importing a Logos Personal Book Bible (LeVerbe Parallel)
+
+Open **Import Bible (.docx)** in the left sidebar. Enter an absolute path to a
+Logos-formatted DOCX, a new translation code (2–16 letters/digits/underscores),
+a display name and a language code (e.g. `nb`, `en`, `grc`, `hbo`). Click
+**Import translation**. The translation appears in the selectors immediately.
+
+This recognizes per-verse milestones such as
+`[[@BibleNO2011:gen 1:1]] 1 {{field-on:bible}}...{{field-off:bible}}`.
+The label after `Bible` is treated as a reference namespace, **not** proof of
+translation name or copyright status. Chapter headings are ignored. The import
+is rejected if there are duplicate, invalid or empty recognized milestones.
+Partial Bibles are supported; imported texts do not have morphological tagging.
+
+The first import creates a private copy of the installed Bible database in the
+user's LeVerbe Parallel data directory. Subsequent imports add translations to
+that copy, surviving reinstallations and package upgrades without changing the
+original LeVerbe. Note that new *bundled* translations from later updates will
+not automatically appear in the private copy; a future migration tool can
+synchronize them. Only import texts you have the right to use. DOCX text never
+leaves your computer. This feature currently depends on `unzip` on Linux.
+
+An equivalent command-line import (included in the Linux package) is:
+
+```sh
+leverbe-import-docx "/home/user/Documents/bible.docx" MYCODE "My translation" nb
+```
+
+Use **Manage translations** to hide/show translations in the dropdown menus.
+Currently selected translations cannot be hidden.
