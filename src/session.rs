@@ -19,6 +19,8 @@ pub struct Session {
     /// database gains or loses a text.
     pub primary: String,
     pub secondary: String,
+    /// Additional visible translations (third and fourth columns).
+    pub extra_translations: Vec<String>,
     pub book: i64,
     pub chapter: i64,
     pub parallel: bool,
@@ -40,6 +42,7 @@ impl Default for Session {
         Self {
             primary: String::new(),
             secondary: String::new(),
+            extra_translations: Vec::new(),
             book: 1,
             chapter: 1,
             parallel: false,
