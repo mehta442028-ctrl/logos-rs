@@ -55,7 +55,7 @@ jobs:
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --release --locked --bin logos-rs --bin import
+        run: cargo build --release --locked --bin logos-rs --bin import --bin import-docx
       - name: Test
         # Before the database exists: the tests that need it skip themselves
         # (some expect user-supplied translations that CI does not have).
@@ -86,7 +86,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --release --locked --bin logos-rs --bin import
+        run: cargo build --release --locked --bin logos-rs --bin import --bin import-docx
       - name: Build the Bible database
         run: .\target\release\import.exe
       - name: Stage the app
