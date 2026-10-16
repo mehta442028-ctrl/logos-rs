@@ -1,0 +1,67 @@
+name: LeVerbe Parallel Ubuntu package
+
+on:
+  push:
+    branches: [feature/multi-translation-parallel]
+  pull_request:
+    branches: [feature/multi-translation-parallel]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: parallel-deb-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    timeout-minutes: 60
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential ca-certificates curl git pkg-config dpkg-dev binutils \
+            libfontconfig-dev libfreetype-dev libxkbcommon-dev unzip python3
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - uses: Swatinem/rust-cache@v2
+      - name: Build application and DOCX importer
+        run: cargo build --release --locked --bin logos-rs --bin import --bin import-docx
+      - name: Test
+        run: cargo test --release --locked
+      - name: Build bundled Bible database
+        run: ./target/release/import
+      - name: Test original-language search against bundled database
+        run: |
+          cargo test --release --locked --test engine_on_db greek_counts_match_sql
+          cargo test --release --locked --test engine_on_db hebrew_counts_match_sql
+          cargo test --release --locked --test engine_on_db frequencies_and_corpus_shape
+      - name: Package
+        shell: bash
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
+          packaging/linux/build-deb.sh "${version}~parallel${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" dist
+          cd dist
+          sha256sum *.deb > SHA256SUMS
+      - name: Install and test packaged DOCX importer
+        run: |
+          apt-get install -y ./dist/*.deb
+          python3 tools/test_deb_import.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leverbe-parallel-ubuntu-26.04-amd64
+          path: |
+            dist/*.deb
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30

@@ -30,6 +30,10 @@ path = "src/main.rs"
 name = "import"
 path = "src/bin/import.rs"
 
+[[bin]]
+name = "import-docx"
+path = "src/bin/import_docx.rs"
+
 # Optimize dependencies (bundled SQLite, slint) even in dev for snappy iteration
 [profile.dev.package."*"]
 opt-level = 2

@@ -30,7 +30,7 @@ install -Dm644 "$here/copyright" "$dest/usr/share/doc/$pkg/copyright"
 # Shared-library dependencies of the binary (fontconfig, freetype, libc, …).
 mkdir -p "$stage/shlibs/debian"
 printf 'Source: %s\n\nPackage: %s\nArchitecture: any\n' "$pkg" "$pkg" > "$stage/shlibs/debian/control"
-shlibs="$(cd "$stage/shlibs" && dpkg-shlibdeps -O "$dest/usr/bin/leverbe-parallel" | sed -n 's/^shlibs:Depends=//p')"
+shlibs="$(cd "$stage/shlibs" && dpkg-shlibdeps -O "$dest/usr/bin/leverbe-parallel" "$dest/usr/bin/leverbe-import-docx" | sed -n 's/^shlibs:Depends=//p')"
 # Loaded at runtime with dlopen by winit/glutin, so invisible to dpkg-shlibdeps:
 # Wayland and X11 windowing, keyboard handling, and OpenGL/EGL. Fonts that
 # cover Hebrew and Greek with their diacritics.

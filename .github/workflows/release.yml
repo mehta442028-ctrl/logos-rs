@@ -9,7 +9,7 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["parallel-v*"]
   workflow_dispatch:
 
 permissions:
@@ -28,8 +28,8 @@ jobs:
       - id: v
         shell: bash
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            version="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" == refs/tags/parallel-v* ]]; then
+            version="${GITHUB_REF_NAME#parallel-v}"
           else
             cargo_version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
             version="${cargo_version}~dev${GITHUB_RUN_NUMBER}"
@@ -115,7 +115,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/parallel-v')
     needs: [version, deb, windows]
     runs-on: ubuntu-latest
     permissions:
