@@ -18,6 +18,8 @@ slint::include_modules!();
 struct State {
     bible: Bible,
     translations: Vec<Translation>,
+    visible: Vec<usize>,
+    hidden: HashSet<String>,
     primary: usize,
     secondary: usize,
     extra: Vec<usize>,
@@ -192,9 +194,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pinned = saved.threshold.and_then(|v| THRESHOLDS.iter().position(|&t| t == v));
     let threshold_idx = pinned.unwrap_or_else(|| default_threshold(&start_lang));
 
+    let hidden: HashSet<String> = saved.hidden_translations.iter().cloned().collect();
+    let visible: Vec<usize> = (0..translations.len()).filter(|&i|
+        !hidden.contains(&translations[i].code) || i == primary || i == secondary || extra.contains(&i)
+    ).collect();
     let state = Rc::new(RefCell::new(State {
         bible,
         translations,
+        visible,
+        hidden,
         primary,
         secondary,
         extra,
@@ -269,12 +277,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Static: translation labels for the combo boxes.
     {
         let st = state.borrow();
-        let labels: Vec<SharedString> = st
-            .translations
-            .iter()
-            .map(|t| format!("{} — {}", t.code, t.name).into())
-            .collect();
-        ui.set_translation_labels(ModelRc::new(VecModel::from(labels)));
+        refresh_translation_menu(&ui, &st);
 
         let thresholds: Vec<SharedString> =
             THRESHOLDS.iter().map(|n| format!("fewer than {n}×").into()).collect();
@@ -336,7 +339,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ui = w.unwrap();
             {
                 let mut st = state.borrow_mut();
-                st.primary = idx as usize;
+                let Some(&selected) = st.visible.get(idx as usize) else { return };
+                st.primary = selected;
                 let id = st.primary_id();
                 st.primary_books = st.bible.books(id).unwrap_or_default();
                 // If the current book is missing in this translation, jump to its first.
@@ -363,7 +367,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (w, state) = ctx!();
         ui.on_secondary_changed(move |idx| {
             let ui = w.unwrap();
-            state.borrow_mut().secondary = idx as usize;
+            let mut st = state.borrow_mut();
+            let Some(&selected) = st.visible.get(idx as usize) else { return };
+            st.secondary = selected;
+            drop(st);
             refresh_reading(&ui, &state);
         });
     }
@@ -377,7 +384,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let selected: HashSet<usize> = std::iter::once(st.primary)
                         .chain(std::iter::once(st.secondary))
                         .chain(st.extra.iter().copied()).collect();
-                    let candidate = (0..st.translations.len()).find(|i| !selected.contains(i)).unwrap_or(st.primary);
+                    let candidate = st.visible.iter().copied().find(|i| !selected.contains(i)).unwrap_or(st.primary);
                     st.extra.push(candidate);
                 }
                 ui.set_extra_count(st.extra.len() as i32);
@@ -403,10 +410,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ui = w.unwrap();
             let mut st = state.borrow_mut();
             if let Some(selected) = st.extra.get_mut(slot as usize) {
-                *selected = index.max(0) as usize;
+                *selected = st.visible.get(index.max(0) as usize).copied().unwrap_or(0);
             }
             drop(st);
             refresh_reading(&ui, &state);
+        });
+    }
+    {
+        let (w, state) = ctx!();
+        ui.on_toggle_translation_visibility(move |index| {
+            let ui = w.unwrap();
+            let mut st = state.borrow_mut();
+            let i = index as usize;
+            let Some(t) = st.translations.get(i) else { return };
+            let code = t.code.clone();
+            if st.primary == i || st.secondary == i || st.extra.contains(&i) { return; }
+            if !st.hidden.insert(code.clone()) { st.hidden.remove(&code); }
+            st.visible = (0..st.translations.len())
+                .filter(|&i| !st.hidden.contains(&st.translations[i].code)).collect();
+            refresh_translation_menu(&ui, &st);
+            save_session(&ui, &st);
         });
     }
     {
@@ -634,9 +657,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Put the window back the way it was left, before the first refresh reads
 /// these flags.
+fn menu_index(st: &State, actual: usize) -> i32 {
+    st.visible.iter().position(|&i| i == actual).unwrap_or(0) as i32
+}
+
+fn refresh_translation_menu(ui: &MainWindow, st: &State) {
+    let labels: Vec<SharedString> = st.visible.iter().map(|&i| {
+        let t = &st.translations[i];
+        format!("{} — {}", t.code, t.name).into()
+    }).collect();
+    ui.set_translation_labels(ModelRc::new(VecModel::from(labels)));
+    let options: Vec<SharedString> = st.translations.iter().map(|t| {
+        format!("{} {} — {}", if st.hidden.contains(&t.code) { "○" } else { "✓" }, t.code, t.name).into()
+    }).collect();
+    ui.set_visibility_options(ModelRc::new(VecModel::from(options)));
+    ui.set_primary_index(menu_index(st, st.primary));
+    ui.set_secondary_index(menu_index(st, st.secondary));
+    update_extra_indices(ui, st);
+}
+
 fn update_extra_indices(ui: &MainWindow, st: &State) {
-    ui.set_third_index(st.extra.first().copied().unwrap_or(0) as i32);
-    ui.set_fourth_index(st.extra.get(1).copied().unwrap_or(0) as i32);
+    ui.set_third_index(menu_index(st, st.extra.first().copied().unwrap_or(st.primary)));
+    ui.set_fourth_index(menu_index(st, st.extra.get(1).copied().unwrap_or(st.primary)));
 }
 
 fn restore(ui: &MainWindow, saved: &Session, primary: usize, secondary: usize) {
@@ -673,6 +715,7 @@ fn snapshot(ui: &MainWindow, st: &State) -> Session {
         primary: st.translations[st.primary].code.clone(),
         secondary: st.translations[st.secondary].code.clone(),
         extra_translations: st.extra.iter().map(|&i| st.translations[i].code.clone()).collect(),
+        hidden_translations: st.hidden.iter().cloned().collect(),
         book: st.book,
         chapter: st.chapter,
         parallel: ui.get_parallel(),
