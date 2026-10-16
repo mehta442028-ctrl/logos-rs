@@ -20,6 +20,7 @@ trap 'rm -rf "$stage"' EXIT
 dest="$stage/$pkg"
 
 install -Dm755 "$root/target/release/logos-rs" "$dest/usr/bin/leverbe-parallel"
+install -Dm755 "$root/target/release/import-docx" "$dest/usr/bin/leverbe-import-docx"
 strip --strip-unneeded "$dest/usr/bin/leverbe-parallel"
 install -Dm644 "$root/data/bible.db" "$dest/usr/share/leverbe-parallel/bible.db"
 install -Dm644 "$here/leverbe-parallel.desktop" "$dest/usr/share/applications/leverbe-parallel.desktop"
@@ -33,7 +34,7 @@ shlibs="$(cd "$stage/shlibs" && dpkg-shlibdeps -O "$dest/usr/bin/leverbe-paralle
 # Loaded at runtime with dlopen by winit/glutin, so invisible to dpkg-shlibdeps:
 # Wayland and X11 windowing, keyboard handling, and OpenGL/EGL. Fonts that
 # cover Hebrew and Greek with their diacritics.
-runtime="libxkbcommon0, libxkbcommon-x11-0, libwayland-client0, libwayland-cursor0, libwayland-egl1, libx11-6, libx11-xcb1, libxcursor1, libxi6, libxrandr2, libegl1, libgl1, fonts-noto-core | fonts-dejavu-core"
+runtime="unzip, libxkbcommon0, libxkbcommon-x11-0, libwayland-client0, libwayland-cursor0, libwayland-egl1, libx11-6, libx11-xcb1, libxcursor1, libxi6, libxrandr2, libegl1, libgl1, fonts-noto-core | fonts-dejavu-core"
 
 installed_size="$(du -sk "$dest" | cut -f1)"
 mkdir -p "$dest/DEBIAN"
