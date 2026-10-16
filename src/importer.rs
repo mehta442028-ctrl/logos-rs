@@ -112,6 +112,11 @@ struct TaggedSource {
 }
 
 const GETBIBLE: &[Source] = &[
+    // Verified public-domain GetBible modules (translation catalogue, 2026).
+    Source { slug: "bibelselskap", code: "NO1930", name: "Bibelen 1930 (Bokmål)", sort: 10, canonical_only: true, downloadable: true },
+    Source { slug: "web", code: "WEB", name: "World English Bible (classic)", sort: 11, canonical_only: true, downloadable: true },
+    Source { slug: "asv", code: "ASV", name: "American Standard Version (1901)", sort: 12, canonical_only: true, downloadable: true },
+    Source { slug: "ylt", code: "YLT", name: "Young's Literal Translation (1898)", sort: 13, canonical_only: true, downloadable: true },
     // KJV and LSG come from Strong's-tagged sources (see import_strongs_tagged).
     Source { slug: "lxx", code: "LXX", name: "Septuagint (Greek OT)", sort: 5, canonical_only: false, downloadable: true },
     Source { slug: "vulgate", code: "VUL", name: "Vulgata Clementina", sort: 6, canonical_only: true, downloadable: true },
