@@ -648,7 +648,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.set_alignment_note(personal.as_ref().map(|(_,note)| note.as_str()).unwrap_or("").into());
             if let Some((ws,_)) = &personal {
                 originals = ws.iter().map(|o| OriginalWord { text:o.text.clone().into(), parsing:o.parsing.clone().into() }).collect();
-                if let Some(first) = ws.first() { parsing = first.parsing.clone(); original_morph = first.morph.clone(); }
+                if let Some(first) = ws.first() { parsing = first.parsing.clone(); original_morph = if ws.iter().all(|w|w.morph==first.morph) {first.morph.clone()}else{String::new()}; }
                 if !ws.is_empty() { originals_label = "Suggested original-language connection".into(); }
             }
             if personal.is_none() && is_translation && !word.strongs.is_empty() {
@@ -661,7 +661,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if parsing.is_empty() && let Some(first) = ws.first() {
                         parsing = first.parsing.clone();
                     }
-                    if let Some(first) = ws.first() { original_morph = first.morph.clone(); }
+                    if let Some(first) = ws.first() { original_morph = if ws.iter().all(|w|w.morph==first.morph) {first.morph.clone()}else{String::new()}; }
                     originals = ws
                         .iter()
                         .map(|o| OriginalWord {
@@ -775,7 +775,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let Some(selected)=&st.selected_word else{return};
             let Some(target)=st.translations.get(index.max(0) as usize) else{return};
             if mode!=2 && selected.word.strongs.is_empty() {ui.set_word_study_status("No original-language connection is available. Use exact translated-word search.".into());return;}
-            if mode==1 && selected.original_morph.is_empty() {ui.set_word_study_status("No original grammatical form is available for this word.".into());return;}
+            if mode==1 && selected.original_morph.is_empty() {ui.set_word_study_status("No unique original grammatical form is available. Click the precise Greek/Hebrew word in its Bible column, then search its form.".into());return;}
             let target_index=index.max(0) as usize;
             let result=st.bible.word_search(target.id,&selected.word.strongs,
                 if mode==1{Some(selected.original_morph.as_str())}else{None},

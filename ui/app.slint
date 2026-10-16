@@ -1390,7 +1390,7 @@ export component MainWindow inherits Window {
                             font-size: max(22px, Theme.reading-size * 1.5);
                             horizontal-alignment: root.word.rtl ? right : left;
                             TouchArea { clicked => { root.search-study-word(0, root.word-search-index); } }
-                            Tooltip { text: "Search for this original word in the translation selected below"; }
+                            Tooltip { Text { text: "Search for this original word in the translation selected below"; } }
                         }
                         Text { text: root.word-frequency; color: Theme.muted; font-size: 12px; wrap: word-wrap; }
                         Text { text: "Search in translation"; color: Theme.muted; font-size: 11px; }
