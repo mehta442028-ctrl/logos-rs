@@ -409,8 +409,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ui.on_extra_changed(move |slot, index| {
             let ui = w.unwrap();
             let mut st = state.borrow_mut();
-            if let Some(selected) = st.extra.get_mut(slot as usize) {
-                *selected = st.visible.get(index.max(0) as usize).copied().unwrap_or(0);
+            let actual = st.visible.get(index.max(0) as usize).copied();
+            if let (Some(selected), Some(actual)) = (st.extra.get_mut(slot as usize), actual) {
+                *selected = actual;
             }
             drop(st);
             refresh_reading(&ui, &state);
