@@ -9,3 +9,5 @@ pub mod morph;
 pub mod reference;
 pub mod search;
 pub mod session;
+
+pub mod personal_import;
