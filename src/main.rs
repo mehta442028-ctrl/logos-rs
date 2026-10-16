@@ -162,6 +162,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         eprintln!("Building Bible database (one-time, ~10s, offline from bundled sources)…");
         logos_rs::importer::run()?;
     }
+    // A user-imported translation is stored in an isolated writable copy.
+    // Prefer it on subsequent launches; bundled files remain unmodified.
+    let personal_db = logos_rs::personal_import::personal_db_path()?;
+    let db = if personal_db.is_file() { personal_db } else { db };
     let bible = Bible::open(&db)?;
     let translations = bible.translations()?;
     if translations.is_empty() {
