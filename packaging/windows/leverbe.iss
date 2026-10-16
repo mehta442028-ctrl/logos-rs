@@ -43,6 +43,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#SourceDir}\LeVerbeParallel.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceDir}\data\bible.db"; DestDir: "{app}\data"; Flags: ignoreversion
 
+Source: "{#SourceDir}\data\study-library.db"; DestDir: "{app}\data"; Flags: ignoreversion
+Source: "{#SourceDir}\data\study-sources.json"; DestDir: "{app}\data"; Flags: ignoreversion
+
 [Icons]
 Name: "{autoprograms}\LeVerbe Parallel"; Filename: "{app}\LeVerbeParallel.exe"
 Name: "{autodesktop}\LeVerbe Parallel"; Filename: "{app}\LeVerbeParallel.exe"; Tasks: desktopicon

@@ -23,6 +23,10 @@ assert "/usr/share/applications/leverbe-parallel.desktop" in paths
 assert "/usr/bin/leverbe" not in paths
 assert "/usr/share/applications/leverbe.desktop" not in paths
 assert not any(p == "/usr/share/leverbe" or p.startswith("/usr/share/leverbe/") for p in paths)
+assert "/usr/share/leverbe-parallel/study-library.db" in paths
+with sqlite3.connect("file:/usr/share/leverbe-parallel/study-library.db?mode=ro",uri=True) as library:
+    assert library.execute("SELECT count(*) FROM works").fetchone()[0] >= 8
+    assert library.execute("SELECT count(*) FROM tsk_refs").fetchone()[0] > 200000
 base = Path("/usr/share/leverbe-parallel/bible.db")
 before = digest(base)
 with tempfile.TemporaryDirectory() as tmp:

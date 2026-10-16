@@ -15,7 +15,14 @@ use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 slint::include_modules!();
 
 /// Mutable application state shared across UI callbacks (single-threaded).
+struct SelectedWord {
+    translation: Translation,
+    word: Word,
+    original_morph: String,
+}
 struct State {
+    selected_word: Option<SelectedWord>,
+    library: Option<logos_rs::study::Library>,
     bible: Bible,
     translations: Vec<Translation>,
     visible: Vec<usize>,
@@ -28,6 +35,7 @@ struct State {
     book: i64,
     chapter: i64,
     last_results: Vec<SearchHit>,
+    results_translation: Option<usize>,
     /// Flat per-chapter word lists for the two columns, indexed by chip idx.
     primary_words: Vec<Word>,
     secondary_words: Vec<Word>,
@@ -203,6 +211,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         !hidden.contains(&translations[i].code) || i == primary || i == secondary || extra.contains(&i)
     ).collect();
     let state = Rc::new(RefCell::new(State {
+        selected_word: None,
+        library: logos_rs::study::Library::open().ok(),
         bible,
         translations,
         visible,
@@ -215,6 +225,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         book,
         chapter,
         last_results: Vec::new(),
+        results_translation: None,
         primary_words: Vec::new(),
         secondary_words: Vec::new(),
         freq: HashMap::new(),
@@ -577,6 +588,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(hit) = hit {
                 {
                     let mut st = state.borrow_mut();
+                    if let Some(target)=st.results_translation {
+                        st.primary=target;
+                        st.primary_books=st.bible.books(st.primary_id()).unwrap_or_default();
+                        if !st.visible.contains(&target) { st.visible.push(target); let code=st.translations[target].code.clone(); st.hidden.remove(&code); }
+                        refresh_translation_menu(&ui,&st);
+                    }
                     st.book = hit.book;
                     st.chapter = hit.chapter;
                     st.target_verse = Some(hit.verse);
@@ -626,11 +643,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut originals_label = String::new();
             let mut originals: Vec<OriginalWord> = Vec::new();
             let mut parsing = word.parsing.clone();
+            let mut original_morph = word.morph.clone();
             let personal = st.bible.personal_word_links(trans.id, &word).ok().flatten();
             ui.set_alignment_note(personal.as_ref().map(|(_,note)| note.as_str()).unwrap_or("").into());
             if let Some((ws,_)) = &personal {
                 originals = ws.iter().map(|o| OriginalWord { text:o.text.clone().into(), parsing:o.parsing.clone().into() }).collect();
-                if let Some(first) = ws.first() { parsing = first.parsing.clone(); }
+                if let Some(first) = ws.first() { parsing = first.parsing.clone(); original_morph = first.morph.clone(); }
                 if !ws.is_empty() { originals_label = "Suggested original-language connection".into(); }
             }
             if personal.is_none() && is_translation && !word.strongs.is_empty() {
@@ -643,6 +661,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if parsing.is_empty() && let Some(first) = ws.first() {
                         parsing = first.parsing.clone();
                     }
+                    if let Some(first) = ws.first() { original_morph = first.morph.clone(); }
                     originals = ws
                         .iter()
                         .map(|o| OriginalWord {
@@ -700,6 +719,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.set_selected_col(col);
             ui.set_selected_idx(idx);
             ui.set_show_word(true);
+            ui.set_word_study_status("".into());
+            drop(st);
+            let mut st = state.borrow_mut();
+            st.selected_word = Some(SelectedWord {translation:trans,word,original_morph});
+            refresh_word_resources(&ui,&st);
         });
     }
     {
@@ -709,6 +733,80 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui.set_show_word(false);
             ui.set_selected_col(-1);
             ui.set_selected_idx(-1);
+        });
+    }
+
+    let library_window = Rc::new(RefCell::new(None::<LibraryWindow>));
+    {
+        let (w,state) = ctx!();
+        let library_window = library_window.clone();
+        ui.on_change_text_size(move |delta| {
+            let ui=w.unwrap();
+            let size=if delta==0.0 {17.0}else{(ui.get_text_size()+delta).clamp(11.0,36.0)};
+            ui.set_text_size(size);
+            ui.global::<Theme>().set_reading_size(size);
+            if let Some(lib)=library_window.borrow().as_ref() {lib.set_text_size(size);}
+            save_session(&ui,&state.borrow());
+        });
+    }
+    {
+        let (w,state)=ctx!();
+        ui.on_open_study_link(move |site| {
+            let ui=w.unwrap();let st=state.borrow();
+            if let Some(selected)=&st.selected_word {
+                if let Some(url)=logos_rs::study::verse_url(selected.word.book,selected.word.chapter,selected.word.verse,site) {
+                    if let Err(e)=logos_rs::study::open_url(&url) {ui.set_word_study_status(format!("Could not open browser: {e}").into());}
+                }
+            }
+        });
+    }
+    {
+        let (w,state)=ctx!();
+        ui.on_follow_reference(move |book,chapter,verse| {
+            let ui=w.unwrap();
+            {let mut st=state.borrow_mut();st.book=book as i64;st.chapter=chapter as i64;st.target_verse=Some(verse as i64);}
+            refresh_reading(&ui,&state);
+        });
+    }
+    {
+        let (w,state)=ctx!();
+        ui.on_search_study_word(move |mode,index| {
+            let ui=w.unwrap();let mut st=state.borrow_mut();
+            let Some(selected)=&st.selected_word else{return};
+            let Some(target)=st.translations.get(index.max(0) as usize) else{return};
+            if mode!=2 && selected.word.strongs.is_empty() {ui.set_word_study_status("No original-language connection is available. Use exact translated-word search.".into());return;}
+            if mode==1 && selected.original_morph.is_empty() {ui.set_word_study_status("No original grammatical form is available for this word.".into());return;}
+            let target_index=index.max(0) as usize;
+            let result=st.bible.word_search(target.id,&selected.word.strongs,
+                if mode==1{Some(selected.original_morph.as_str())}else{None},
+                if mode==2{Some(selected.word.text.as_str())}else{None});
+            match result {
+                Ok(hits)=>{
+                    let summary=format!("{} matching verses in {} · {}",hits.len(),target.code,
+                        if mode==0{"same original word"}else if mode==1{"same original word and grammatical form"}else{"exact translated word"});
+                    ui.set_results(ModelRc::new(VecModel::from(hits.iter().map(search_item).collect::<Vec<_>>())));
+                    ui.set_results_summary(summary.clone().into());ui.set_word_study_status(summary.into());
+                    ui.set_show_results(true);ui.set_search_epoch(ui.get_search_epoch()+1);st.last_results=hits;st.results_translation=Some(target_index);
+                },
+                Err(e)=>ui.set_word_study_status(format!("Search failed: {e}").into()),
+            }
+        });
+    }
+    {
+        let (w,state)=ctx!();let window=library_window.clone();
+        ui.on_open_library(move || {
+            let ui=w.unwrap();
+            if window.borrow().is_none() {
+                match make_library_window(&ui) {
+                    Ok(lib)=>*window.borrow_mut()=Some(lib),
+                    Err(e)=>{ui.set_show_word(true);ui.set_word_study_status(format!("Library unavailable: {e}").into());return;}
+                }
+            }
+            if let Some(lib)=window.borrow().as_ref(){
+                lib.set_text_size(ui.get_text_size());lib.global::<Theme>().set_dark(ui.global::<Theme>().get_dark());
+                let _=lib.show();
+            }
+            let _=&state;
         });
     }
 
@@ -740,6 +838,7 @@ fn refresh_translation_menu(ui: &MainWindow, st: &State) {
         format!("{} — {}", t.code, t.name).into()
     }).collect();
     ui.set_translation_labels(ModelRc::new(VecModel::from(labels)));
+    ui.set_all_translation_labels(ModelRc::new(VecModel::from(st.translations.iter().map(|t| format!("{} — {}",t.code,t.name).into()).collect::<Vec<SharedString>>())));
     let options: Vec<SharedString> = st.translations.iter().map(|t| {
         format!("{} {} — {}", if st.hidden.contains(&t.code) { "○" } else { "✓" }, t.code, t.name).into()
     }).collect();
@@ -756,6 +855,9 @@ fn update_extra_indices(ui: &MainWindow, st: &State) {
 
 fn restore(ui: &MainWindow, saved: &Session, primary: usize, secondary: usize) {
     ui.global::<Theme>().set_dark(saved.dark);
+    let text_size = if saved.text_size.is_finite() { saved.text_size.clamp(11.0, 36.0) } else {17.0};
+    ui.set_text_size(text_size);
+    ui.global::<Theme>().set_reading_size(text_size);
     ui.set_parallel(saved.parallel);
     ui.set_scroll_lock(saved.scroll_lock);
     ui.set_reader(saved.reader);
@@ -798,6 +900,7 @@ fn snapshot(ui: &MainWindow, st: &State) -> Session {
         // keeps its own conventional default.
         threshold: st.threshold_pinned.then(|| THRESHOLDS[st.threshold_idx]),
         dark: ui.global::<Theme>().get_dark(),
+        text_size: ui.get_text_size(),
         width: Some(size.width as u32),
         height: Some(size.height as u32),
     }
@@ -959,6 +1062,7 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
 
     // Every navigation, translation change and pane toggle lands here, which
     // makes it the one place the session needs writing from.
+    refresh_word_resources(ui, &st);
     save_session(ui, &st);
 }
 
@@ -1167,7 +1271,7 @@ fn run_search(ui: &MainWindow, state: &Rc<RefCell<State>>, query: &str) {
     ui.set_show_results(true);
     // a new query starts at the top of the list; coming back from a hit does not
     ui.set_search_epoch(ui.get_search_epoch() + 1);
-    state.borrow_mut().last_results = hits;
+    {let mut st=state.borrow_mut();st.last_results=hits;st.results_translation=None;}
 }
 
 /// Advanced search: evaluate the query over the original-language text —
@@ -1258,6 +1362,7 @@ fn run_advanced(ui: &MainWindow, state: &Rc<RefCell<State>>, query: &str) {
     ui.set_show_results(true);
     ui.set_search_epoch(ui.get_search_epoch() + 1);
     st.last_results = hits;
+    st.results_translation=None;
 }
 
 /// What the background loader hands back to the UI thread.
@@ -1387,7 +1492,8 @@ mod layout_tests {
             ui.set_extra_count(count - 2);
             ui.set_pairs(ModelRc::new(VecModel::from(pair_rows(&plain, &tagged,
                 &[rtl.clone(), plain.clone()]))));
-            for (width, word_panel) in [(720., false), (1200., false), (1600., false), (1200., true), (720., true)] {
+            for (width, word_panel, size) in [(720., false,17.), (1200., false,17.), (1600., false,17.), (1200., true,17.), (720., true,17.), (1200.,true,28.)] {
+                ui.global::<Theme>().set_reading_size(size);
                 ui.set_show_word(word_panel);
                 ui.window().set_size(slint::LogicalSize::new(width, 900.));
                 let snapshot = ui.window().take_snapshot().unwrap();
@@ -1435,5 +1541,73 @@ mod layout_tests {
         ui.window().take_snapshot().unwrap();
         assert!(ElementQuery::from_root(&ui).match_inherits("PairedColumn").find_all().is_empty());
         assert_eq!(ElementQuery::from_root(&ui).match_inherits("ReadingColumn").find_all().len(), 4);
+        let lib=LibraryWindow::new().unwrap();
+        lib.set_work_labels(ModelRc::new(VecModel::from(vec![SharedString::from("Matthew Henry — Complete Unabridged Commentary")])));
+        lib.set_section_labels(ModelRc::new(VecModel::from(vec![SharedString::from("Genesis 1")])));
+        lib.set_notice("Historical edition and source credits".into());
+        lib.set_paragraphs(ModelRc::new(VecModel::from(vec![SharedString::from("A commentary paragraph with text that must wrap inside its reading pane. ".repeat(20))])));
+        lib.show().unwrap();
+        for size in [11.,17.,28.,36.] {
+            lib.set_text_size(size);
+            lib.window().set_size(slint::LogicalSize::new(1000.,800.));
+            lib.window().take_snapshot().unwrap();
+        }
+
     }
+}
+
+
+fn refresh_word_resources(ui:&MainWindow,st:&State) {
+    let Some(selected)=&st.selected_word else{return};
+    let word=&selected.word;
+    let surface=st.bible.surface_occurrences(selected.translation.id,&word.text).unwrap_or(0);
+    let mut frequency=format!("Exact displayed word: {surface} occurrences in {}.",selected.translation.code);
+    if !word.strongs.is_empty(){
+        let count=st.bible.original_occurrences(&word.strongs).unwrap_or(0);
+        frequency=format!("{}: {count} occurrences in {}.\n{frequency}",word.strongs,
+            if word.strongs.starts_with('H'){"the Hebrew OT (WLC)"}else{"the Greek NT (SBLGNT)"});
+    }
+    ui.set_word_frequency(frequency.into());
+    let Some(lib)=&st.library else {ui.set_tsk_text("Install the study-library package data to read TSK offline.".into());return};
+    match lib.tsk(word.book,word.chapter,word.verse){
+        Ok((body,refs))=>{
+            ui.set_tsk_text(if body.is_empty(){"No TSK entry for this verse.".into()}else{body.into()});
+            ui.set_tsk_refs(ModelRc::new(VecModel::from(refs.into_iter().map(|r|{
+                let preview=st.bible.range_preview(st.primary_id(),r.book,r.chapter,r.verse,r.end_chapter,r.end_verse).unwrap_or_else(|_|"Preview unavailable".into());
+                CrossRefItem{label:format!("{}{}{}",r.phrase,if r.phrase.is_empty(){""}else{" · "},r.label).into(),preview:format!("{} — {}\n{}",r.label,st.translations[st.primary].code,preview).into(),book:r.book as i32,chapter:r.chapter as i32,verse:r.verse as i32}
+            }).collect::<Vec<_>>())));
+        },Err(e)=>ui.set_tsk_text(format!("TSK unavailable: {e}").into()),
+    }
+}
+
+fn make_library_window(main:&MainWindow)->Result<LibraryWindow,Box<dyn std::error::Error>> {
+    let db=Rc::new(logos_rs::study::Library::open()?);
+    let works=Rc::new(db.works()?);
+    let sections=Rc::new(RefCell::new(Vec::<logos_rs::study::Section>::new()));
+    let ui=LibraryWindow::new()?;
+    ui.set_work_labels(ModelRc::new(VecModel::from(works.iter().map(|w|w.title.clone().into()).collect::<Vec<SharedString>>())));
+    ui.set_text_size(main.get_text_size());
+    ui.global::<Theme>().set_dark(main.global::<Theme>().get_dark());
+    fn show_sections(ui:&LibraryWindow,db:&logos_rs::study::Library,works:&[logos_rs::study::Work],sections:&RefCell<Vec<logos_rs::study::Section>>,query:&str){
+        let Some(work)=works.get(ui.get_work_index().max(0) as usize) else{return};
+        ui.set_notice(work.notice.clone().into());
+        let rows=db.sections(work.id,query).unwrap_or_default();
+        ui.set_section_labels(ModelRc::new(VecModel::from(rows.iter().map(|s|s.title.clone().into()).collect::<Vec<SharedString>>())));
+        ui.set_status(format!("{} sections · Offline library",rows.len()).into());
+        ui.set_section_index(0);
+        ui.set_paragraphs(ModelRc::new(VecModel::from(rows.first().and_then(|s|db.paragraphs(s.id).ok()).unwrap_or_default().into_iter().map(SharedString::from).collect::<Vec<_>>())));
+        *sections.borrow_mut()=rows;
+    }
+    show_sections(&ui,&db,&works,&sections,"");
+    {let w=ui.as_weak();let db=db.clone();let works=works.clone();let sections=sections.clone();
+    ui.on_select_work(move |_|{let ui=w.unwrap();show_sections(&ui,&db,&works,&sections,"");});}
+    {let w=ui.as_weak();let db=db.clone();let works=works.clone();let sections=sections.clone();
+    ui.on_filter_sections(move |q|{let ui=w.unwrap();show_sections(&ui,&db,&works,&sections,q.as_str());});}
+    {let w=ui.as_weak();let db=db.clone();let sections=sections.clone();
+    ui.on_select_section(move |i|{let ui=w.unwrap();if let Some(s)=sections.borrow().get(i.max(0) as usize){
+        ui.set_paragraphs(ModelRc::new(VecModel::from(db.paragraphs(s.id).unwrap_or_default().into_iter().map(SharedString::from).collect::<Vec<_>>())));
+    }});}
+    {let w=ui.as_weak();let works=works.clone();ui.on_open_source(move ||{let ui=w.unwrap();if let Some(work)=works.get(ui.get_work_index().max(0) as usize){let _=logos_rs::study::open_url(&work.source);}});}
+    {let w=ui.as_weak();ui.on_resize_text(move |delta|{let ui=w.unwrap();ui.set_text_size((ui.get_text_size()+delta).clamp(11.0,36.0));});}
+    Ok(ui)
 }

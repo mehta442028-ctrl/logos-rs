@@ -238,3 +238,39 @@ reports the interruption. Imports run in a database transaction; keep the app
 open until the completion message. AI mode processes at most the selected limit
 of eligible verses; the rest retain offline suggestions. Unusually long verses
 are kept local. Existing imported translations are not silently reprocessed.
+
+### Word study and offline commentary library
+
+Click a Bible word to see original-language occurrence counts (WLC OT / SBLGNT NT)
+and exact displayed-word counts for its translation. In **Search in translation**,
+choose any installed translation, then click the large word or **Find original word**.
+**Find same grammatical form** restricts the source word to its recorded morphology;
+results display the chosen translation's verses. **Find exact translated word**
+searches that translation's actual text (case-insensitive, punctuation at word edges
+ignored). Original-word/form searches use the source verse, not a claim that every
+translation has a verified word alignment. Unlinked words still support text search.
+
+Bible Gateway links open all versions offered by that site for English or Norwegian
+at the selected verse; Blue Letter Bible opens its verse page. These links need an
+internet connection. The complete Treasury of Scripture Knowledge is available
+offline; hover a reference to preview its text in the current **leftmost column**,
+or click it to navigate there. Missing passages are explicitly marked unavailable.
+
+**Open commentary library** opens a separate resizable window with complete,
+unabridged Matthew Henry, Calvin, Matthew Poole, all seven volumes of J. C. Ryle's
+Gospel exposition, John Owen's four-volume 1840 Hebrews exposition, Barnes,
+Clarke, and Jamieson–Fausset–Brown. Select a work and section; enter words or a
+passage heading in the filter and press Enter. Poole, Ryle and Owen use historical
+scan OCR, with recognition errors possible (especially older type, Greek and
+Hebrew); source/edition links and retained credits identify each scan. The other
+works use redistributable public-domain SWORD editions. These are bundled at
+package build time and need no downloads during normal reading.
+
+Use **A− / A+** in the sidebar to change Bible text size (11–36 px); the setting
+is saved between launches. The commentary window has its own text-size controls.
+
+Build library data with `python3 tools/build_study_library.py` before packaging.
+Sources, SHA-256 pins, editions, notices and SWORD credits are in
+`data/study/sources.json`, also shipped with the package. The separate read-only
+`study-library.db` ensures library updates work even with a personal Bible database.
+Set `LEVERBE_LIBRARY` only to override its location for development.

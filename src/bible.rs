@@ -222,6 +222,40 @@ impl Bible {
         Ok(Some((words,note)))
     }
 
+    pub fn original_occurrences(&self, strongs: &str) -> rusqlite::Result<i64> {
+        self.conn.query_row("SELECT COUNT(*) FROM words w JOIN translations t ON t.id=w.translation_id WHERE w.strongs=?1 AND ((t.code='WLC' AND w.book BETWEEN 1 AND 39) OR (t.code='SBLGNT' AND w.book BETWEEN 40 AND 66))",[strongs],|r|r.get(0))
+    }
+    pub fn surface_occurrences(&self, tid:i64, surface:&str) -> rusqlite::Result<usize> {
+        let wanted=surface_key(surface);
+        if wanted.is_empty() {return Ok(0);}
+        let mut stmt=self.conn.prepare("SELECT text FROM verses WHERE translation_id=?1")?;
+        let mut count=0;
+        for text in stmt.query_map([tid],|r|r.get::<_,String>(0))? {count+=text?.split_whitespace().filter(|w|surface_key(w)==wanted).count();}
+        Ok(count)
+    }
+    pub fn range_preview(&self,tid:i64,book:i64,chapter:i64,verse:i64,end_chapter:i64,end_verse:i64)->rusqlite::Result<String> {
+        let mut stmt=self.conn.prepare("SELECT chapter,verse,text FROM verses WHERE translation_id=?1 AND book=?2 AND (chapter>?3 OR (chapter=?3 AND verse>=?4)) AND (chapter<?5 OR (chapter=?5 AND verse<=?6)) ORDER BY chapter,verse LIMIT 200")?;
+        let lines=stmt.query_map(rusqlite::params![tid,book,chapter,verse,end_chapter,end_verse],|r|Ok(format!("{}:{} {}",r.get::<_,i64>(0)?,r.get::<_,i64>(1)?,r.get::<_,String>(2)?)))?.collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(if lines.is_empty(){"This passage is not available in the leftmost translation.".into()}else{lines.join("\n")})
+    }
+    pub fn word_search(&self,tid:i64,strongs:&str,morph:Option<&str>,surface:Option<&str>)->rusqlite::Result<Vec<SearchHit>> {
+        let mut hits=Vec::new();
+        let sql=if surface.is_some() {
+            "SELECT book,chapter,verse,text FROM verses WHERE translation_id=?1 ORDER BY book,chapter,verse"
+        } else {
+            "SELECT v.book,v.chapter,v.verse,v.text FROM verses v WHERE v.translation_id=?1 AND EXISTS(SELECT 1 FROM words w JOIN translations t ON t.id=w.translation_id WHERE w.book=v.book AND w.chapter=v.chapter AND w.verse=v.verse AND w.strongs=?2 AND (?3 IS NULL OR w.morph=?3) AND ((t.code='WLC' AND w.book BETWEEN 1 AND 39) OR (t.code='SBLGNT' AND w.book BETWEEN 40 AND 66))) ORDER BY v.book,v.chapter,v.verse"
+        };
+        let mut stmt=self.conn.prepare(sql)?;
+        let mapper=|r:&rusqlite::Row|Ok((r.get::<_,i64>(0)?,r.get::<_,i64>(1)?,r.get::<_,i64>(2)?,r.get::<_,String>(3)?));
+        let rows=if surface.is_some(){stmt.query_map([tid],mapper)?}else{stmt.query_map(rusqlite::params![tid,strongs,morph],mapper)?};
+        for row in rows {
+            let (book,chapter,verse,text)=row?;
+            if surface.is_some_and(|s|!text.split_whitespace().any(|w|surface_key(w)==surface_key(s))) {continue;}
+            hits.push(SearchHit{book,chapter,verse,book_name:crate::study::book_name(book).into(),snippet:text});
+        }
+        Ok(hits)
+    }
+
     pub fn words_with_strongs(
         &self,
         translation_id: i64,
@@ -356,4 +390,8 @@ fn build_match(query: &str) -> String {
         .map(|t| format!("\"{t}\""))
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+fn surface_key(text:&str)->String {
+    text.trim_matches(|c:char|!c.is_alphanumeric()).to_lowercase()
 }

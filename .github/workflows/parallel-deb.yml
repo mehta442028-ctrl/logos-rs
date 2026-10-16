@@ -56,6 +56,12 @@ jobs:
           cargo test --release --locked --test engine_on_db greek_counts_match_sql
           cargo test --release --locked --test engine_on_db hebrew_counts_match_sql
           cargo test --release --locked --test engine_on_db frequencies_and_corpus_shape
+          cargo test --release --locked --test engine_on_db word_study_counts_form_search_and_translation_previews
+      - name: Build and verify offline study library
+        run: |
+          python3 tools/test_study_library.py
+          python3 tools/build_study_library.py
+          python3 tools/test_study_library.py --database
       - name: Package
         shell: bash
         run: |

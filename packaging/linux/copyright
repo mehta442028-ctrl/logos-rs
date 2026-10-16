@@ -11,3 +11,18 @@ Comment:
  Leningrad Codex / OpenScriptures morphhb (CC BY 4.0), SBLGNT / MorphGNT
  (CC BY-SA), the Septuagint and Vulgata Clementina (getbible.net), and the
  OpenScriptures Strong's lexicons. See the project README for details.
+
+Offline study library:
+ Matthew Henry (complete/unabridged), John Calvin, Albert Barnes, Adam Clarke,
+ Jamieson–Fausset–Brown, and Treasury of Scripture Knowledge:
+ public-domain SWORD modules distributed by CrossWire (www.crosswire.org).
+ Original module configurations and acknowledgements are preserved in
+ /usr/share/doc/leverbe-parallel/study-sources.json.
+ Matthew Poole: Annotations upon the Holy Bible, 1688, volumes I–II.
+ J. C. Ryle: Expository Thoughts on the Gospels, seven historical volumes.
+ John Owen: Exposition of Hebrews, Thomas Tegg, 1840, four volumes.
+ These historical public-domain editions are scan OCR from Internet Archive
+ and contributing libraries. Scan and Google digitization credits are retained.
+ OCR is uncorrected and may contain errors. Exact sources, editions and download
+ checksums are recorded in study-sources.json. The application is not affiliated
+ with Bible Gateway, Blue Letter Bible, CrossWire or Internet Archive.

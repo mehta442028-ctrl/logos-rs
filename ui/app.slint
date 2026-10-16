@@ -16,7 +16,7 @@ export global Theme {
     out property <color> accent-bg: dark ? #2a3550 : #e2ecff;
     out property <color> verse-num: dark ? #7d838d : #9aa0a6;
 
-    out property <length> reading-size: 17px;
+    in-out property <length> reading-size: 17px;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,6 +67,7 @@ export struct GlossItem {
 // translations, so a verse can exist in one and not the other.
 export struct PairRow { verse: int, left: VerseRow, right: VerseRow, third: VerseRow, fourth: VerseRow }
 
+export struct CrossRefItem { label: string, preview: string, book: int, chapter: int, verse: int }
 export struct OriginalWord { text: string, parsing: string }
 export struct WordInfo {
     surface: string, translit: string, lemma: string, strongs: string,
@@ -693,6 +694,18 @@ export component MainWindow inherits Window {
     in property <string> import-status;
     in property <bool> import-busy;
     in property <string> alignment-note;
+    in property <string> word-frequency;
+    in property <string> word-study-status;
+    in property <[string]> all-translation-labels;
+    in-out property <int> word-search-index: 0;
+    in property <string> tsk-text;
+    in property <[CrossRefItem]> tsk-refs;
+    in-out property <float> text-size: 17;
+    callback change-text-size(float);
+    callback open-study-link(int);
+    callback search-study-word(int, int);
+    callback open-library();
+    callback follow-reference(int, int, int);
     in-out property <bool> import-ai: false;
     in-out property <string> import-model;
     in-out property <string> import-limit: "20";
@@ -1082,6 +1095,13 @@ export component MainWindow inherits Window {
                                 }
                             }
                         }
+                        HorizontalLayout {
+                            Pill { label: "A−"; clicked => { root.change-text-size(-1); } }
+                            Text { text: root.text-size; color: Theme.muted; vertical-alignment: center; }
+                            Pill { label: "A+"; clicked => { root.change-text-size(1); } }
+                            Pill { label: "Reset"; clicked => { root.change-text-size(0); } }
+                        }
+                        Pill { label: "Open commentary library ↗"; clicked => { root.open-library(); } }
                         // translation pickers
                         Text { text: "Primary translation"; color: Theme.muted; font-size: 11px; }
                         ComboBox {
@@ -1342,7 +1362,15 @@ export component MainWindow inherits Window {
                 if root.show-word: Rectangle {
                     width: 340px;
                     background: Theme.panel;
-                    VerticalLayout {
+                    study-scroll := ScrollView {
+                        width: parent.width;
+                        height: parent.height;
+                        preferred-width: 0px;
+                        preferred-height: 0px;
+                        content-width: self.visible-width;
+                        content-height: study-body.preferred-height;
+                    study-body := VerticalLayout {
+                        width: study-scroll.visible-width;
                         padding: 16px;
                         spacing: 10px;
                         HorizontalLayout {
@@ -1359,9 +1387,21 @@ export component MainWindow inherits Window {
                         Text {
                             text: root.word.surface;
                             color: Theme.text;
-                            font-size: 30px;
+                            font-size: max(22px, Theme.reading-size * 1.5);
                             horizontal-alignment: root.word.rtl ? right : left;
+                            TouchArea { clicked => { root.search-study-word(0, root.word-search-index); } }
+                            Tooltip { text: "Search for this original word in the translation selected below"; }
                         }
+                        Text { text: root.word-frequency; color: Theme.muted; font-size: 12px; wrap: word-wrap; }
+                        Text { text: "Search in translation"; color: Theme.muted; font-size: 11px; }
+                        ComboBox { model: root.all-translation-labels; current-index <=> root.word-search-index; min-width: 0px; preferred-width: 0px; }
+                        Pill { label: "Find original word"; clicked => { root.search-study-word(0, root.word-search-index); } }
+                        Pill { label: "Find same grammatical form"; clicked => { root.search-study-word(1, root.word-search-index); } }
+                        Pill { label: "Find exact translated word"; clicked => { root.search-study-word(2, root.word-search-index); } }
+                        Text { text: root.word-study-status; color: Theme.muted; font-size: 11px; wrap: word-wrap; }
+                        Pill { label: "Bible Gateway · all English versions"; clicked => { root.open-study-link(0); } }
+                        Pill { label: "Bible Gateway · all Norwegian versions"; clicked => { root.open-study-link(1); } }
+                        Pill { label: "Blue Letter Bible · this verse"; clicked => { root.open-study-link(2); } }
                         if root.word.translit != "": Text {
                             text: root.word.translit;
                             color: Theme.muted;
@@ -1436,10 +1476,8 @@ export component MainWindow inherits Window {
                             wrap: word-wrap;
                         }
                         Rectangle { height: 1px; background: Theme.border; }
-                        ScrollView {
-                            vertical-stretch: 1;
-                            VerticalLayout {
-                                width: 100%;
+                        VerticalLayout {
+                                horizontal-stretch: 1;
                                 spacing: 8px;
                                 Text {
                                     width: 100%;
@@ -1474,9 +1512,82 @@ export component MainWindow inherits Window {
                                     font-size: 15px;
                                     wrap: word-wrap;
                                 }
-                            }
+                        }
+                        Rectangle { height: 1px; background: Theme.border; }
+                        Text { text: "Treasury of Scripture Knowledge"; color: Theme.text; font-weight: 700; font-size: 14px; wrap: word-wrap; }
+                        Text { text: root.tsk-text; color: Theme.muted; font-size: 12px; wrap: word-wrap; }
+                        Text { text: "Hover for the leftmost Bible; click to open the verse."; color: Theme.muted; font-size: 11px; wrap: word-wrap; }
+                        for r in root.tsk-refs: Text {
+                            text: r.label;
+                            color: Theme.accent;
+                            font-size: 12px;
+                            wrap: word-wrap;
+                            TouchArea { mouse-cursor: pointer; clicked => { root.follow-reference(r.book, r.chapter, r.verse); } }
+                            Tooltip { Text { width: 430px; text: r.preview; color: Theme.text; font-size: 14px; wrap: word-wrap; } }
                         }
                     }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+export component LibraryWindow inherits Window {
+    title: "LeVerbe Parallel · Commentary library";
+    preferred-width: 1000px;
+    preferred-height: 800px;
+    min-width: 600px;
+    min-height: 400px;
+    background: Theme.bg;
+    in property <[string]> work-labels;
+    in property <[string]> section-labels;
+    in property <[string]> paragraphs;
+    in property <string> notice;
+    in property <string> status;
+    in-out property <float> text-size: 17;
+    in-out property <int> work-index;
+    in-out property <int> section-index;
+    callback select-work(int);
+    callback select-section(int);
+    callback filter-sections(string);
+    callback open-source();
+    callback resize-text(float);
+    VerticalLayout {
+        padding: 12px;
+        spacing: 10px;
+        HorizontalLayout {
+            ComboBox { model: root.work-labels; current-index <=> root.work-index; min-width: 0px; preferred-width: 0px; horizontal-stretch: 1; selected(v) => { root.select-work(self.current-index); } }
+            Pill { label: "A−"; clicked => { root.resize-text(-1); } }
+            Pill { label: "A+"; clicked => { root.resize-text(1); } }
+            Pill { label: "Source / edition"; clicked => { root.open-source(); } }
+        }
+        Text { text: root.notice; color: Theme.muted; font-size: 12px; wrap: word-wrap; }
+        LineEdit { placeholder-text: "Filter sections by passage, heading, or words in the commentary"; accepted(t) => { root.filter-sections(t); } }
+        Text { text: root.status; color: Theme.muted; font-size: 11px; }
+        HorizontalLayout {
+            ListView {
+                width: 250px;
+                for section[i] in root.section-labels: Rectangle {
+                    height: 42px;
+                    background: i == root.section-index ? Theme.accent-bg : transparent;
+                    Text { x: 6px; width: parent.width - 12px; height: parent.height; text: section; color: Theme.text; font-size: 13px; wrap: word-wrap; vertical-alignment: center; }
+                    TouchArea { clicked => { root.section-index = i; root.select-section(i); } }
+                }
+            }
+            Rectangle { width: 1px; background: Theme.border; }
+            ListView {
+                horizontal-stretch: 1;
+                min-width: 0px;
+                preferred-width: 0px;
+                for paragraph in root.paragraphs: Text {
+                    text: paragraph;
+                    color: Theme.text;
+                    font-size: root.text-size * 1px;
+                    wrap: word-wrap;
+                    min-width: 0px;
+                    preferred-width: 0px;
                 }
             }
         }

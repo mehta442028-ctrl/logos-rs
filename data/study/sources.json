@@ -1,0 +1,217 @@
+{
+  "format": 1,
+  "works": [
+    {
+      "kind": "sword",
+      "title": "Matthew Henry — Complete Unabridged Commentary",
+      "source": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=MHC",
+      "notice": "Public-domain text. CrossWire SWORD edition; source attribution retained in the packaged sources manifest.",
+      "sources": [
+        {
+          "file": "MHC.zip",
+          "url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/MHC.zip",
+          "sha256": "6bcb936873ca144e317805e5c1677940fd86e2403f7c14517752e44f25c8882b"
+        }
+      ],
+      "sword_configuration": "## Sword module configuration file\n\n## Required elements\n# Module Unique Identifier.\n[MHC]\n\n# Short description of the module.\nDescription=Matthew Henry's Complete Commentary on the Whole Bible\n\n# Path to the module data files relative to the SWORD module library root directory.\nDataPath=./modules/comments/zcom4/mhc/\n\n# Driver used for reading the module.\nModDrv=zCom4\n\n## Required elements with defaults\n# Markup used in the module.\nSourceType=OSIS\n\n# How the text in the conf and in the module are encoded.\nEncoding=UTF-8\n\n# Compression algorithm.\nCompressType=ZIP\n\n# How much of the work is compressed into a block.\nBlockType=BOOK\n\n# Versification employed by a Bible module.\nVersification=KJV\n\n## Elements required for proper rendering\n# Filters.\nGlobalOptionFilter=OSISFootnotes\nGlobalOptionFilter=OSISHeadings\nGlobalOptionFilter=OSISScripref\n\n## General informatic and installer elements\n# A lengthier description.\nAbout=Matthew Henry's Complete Commentary on the Whole Bible\\par Public Domain--Copy Freely.\\par This text was prepared from the Christian Classics Ethereal Library located at www.ccel.org.\\par Thanks also to Logos Research, Inc. for providing CCEL with their text of Matthew Henrey's Complete Commentary, from which this edition has been prepared.\n\n# Indicates the date that the module was changed.\nSwordVersionDate=2022-08-29\n\n# Module's revision.\nVersion=2.2\n\n# Indicates what has changed between different versions.\nHistory_1.1=Updated to complete MHC text now available on CCEL and swapped module names with concise edition\nHistory_1.2=Changed to compressed module\nHistory_1.3=Fixed linked verses in compressed module\nHistory_1.4=Fixed numerous malformed XML problems\nHistory_1.5=corrected encoding value\nHistory_1.6=heading corrections, linking corrections\nHistory_2.0=(2021-08-21) Complete new version, correction of tracker issues: MOD-65, MOD-392, MOD-401\nHistory_2.1=(2022-05-28) Correction of multiple crossreferences as reported on: MOD-422\nHistory_2.1.1=(2022-08-26) Rebuild with the ModDrv=zCom4 option\nHistory_2.2=(2022-08-29) Correction of errors in multiple crossreferences\n\n# The minimum version of the SWORD library required for this module.\nMinimumVersion=1.5.9\n\n# Library of Congress Subject Heading.\nLCSH=Commentary.English\n\n# Language code of the module.\nLang=en\n\n# OSIS schema version employed in the OSIS source document.\nOSISVersion=2.1.1\n\n## Copyright and Licensing related elements\nDistributionLicense=Public Domain\nTextSource=http://www.ccel.org/\n\n# Total byte size of the module on disk.\nInstallSize=15604474\n"
+    },
+    {
+      "kind": "sword",
+      "title": "John Calvin — Commentaries",
+      "source": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=CalvinCommentaries",
+      "notice": "Public-domain text. CrossWire SWORD edition; source attribution retained in the packaged sources manifest.",
+      "sources": [
+        {
+          "file": "CalvinCommentaries.zip",
+          "url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/CalvinCommentaries.zip",
+          "sha256": "df66fc8c03537499ad006d069481d2c95b600887cdbd6ce75ec5d264b573192a"
+        }
+      ],
+      "sword_configuration": "## Sword module configuration file\n\n## Required elements\n# Module Unique Identifier.\n[CalvinCommentaries]\n\n# Short description of the module.\nDescription=Calvin's Collected Commentaries\n\n# Path to the module data files relative to the SWORD module library root directory.\nDataPath=./modules/comments/zcom/calvincommentaries/\n\n# Driver used for reading the module.\nModDrv=zCom\n\n## Required elements with defaults\n# Markup used in the module.\nSourceType=OSIS\n\n# How the text in the conf and in the module are encoded.\nEncoding=UTF-8\n\n# Compression algorithm.\nCompressType=ZIP\n\n# How much of the work is compressed into a block.\nBlockType=BOOK\n\n# Versification employed by a Bible module.\nVersification=KJV\n\n## Elements required for proper rendering\n# Filters.\nGlobalOptionFilter=OSISFootnotes\nGlobalOptionFilter=OSISHeadings\nGlobalOptionFilter=OSISScripref\n\n# Module features.\nFeature=Images\nFeature=NoParagraphs\n\n## General informatic and installer elements\n# A lengthier description.\nAbout=John Calvin's commentaries on many books of the Bible, collected \\\ninto a single volume from material found at Christian Classics Ethereal Library \\par \\\nConverted to Sword module format by Luke Plant <L.Plant.98@cantab.net> \\par \\\nBooks with commentary:\\par \\\nGenesis\\par \\\nExodus\\par \\\nLeviticus\\par \\\nNumbers\\par \\\nDeuteronomy\\par \\\nJoshua\\par \\\nPsalms\\par \\\nIsaiah\\par \\\nJeremiah\\par \\\nLamentations\\par \\\nEzekiel\\par \\\nDaniel\\par \\\nHosea\\par \\\nJoel\\par \\\nAmos\\par \\\nObadiah\\par \\\nJonah\\par \\\nMicah\\par \\\nNahum\\par \\\nHabakkuk\\par \\\nZephaniah\\par \\\nHaggai\\par \\\nZechariah\\par \\\nMalachi\\par \\\nMatthew\\par \\\nMark\\par \\\nLuke\\par \\\nJohn\\par \\\nRomans\\par \\\nI Corinthians\\par \\\nII Corinthians\\par \\\nGalatians\\par \\\nEphesians\\par \\\nPhilippians\\par \\\nColossians\\par \\\nI Thessalonians\\par \\\nII Thessalonians\\par \\\nI Timothy\\par \\\nII Timothy\\par \\\nTitus\\par \\\nPhilemon\\par \\\nHebrews\\par \\\nJames\\par \\\nI Peter\\par \\\nII Peter\\par \\\nI John\\par \\\nJude\n\n# Indicates the date that the module was changed.\nSwordVersionDate=2022-08-01\n\n# Module's revision.\nVersion=1.1\n\n# Indicates what has changed between different versions.\nHistory_1.0=First build 2008-01-01\nHistory_1.1=(2022-08-01) Correction of small text issue: MOD-423\n\n# The minimum version of the SWORD library required for this module.\nMinimumVersion=1.5.9\n\n# Library of Congress Subject Heading.\nLCSH=Commentary.English\n\n# Language code of the module.\nLang=en\n\n## Copyright and Licensing related elements\nDistributionLicense=Public Domain\nTextSource=http://www.ccel.org/\n\n# Total byte size of the module on disk.\nInstallSize=21630766\n"
+    },
+    {
+      "kind": "sword",
+      "title": "Albert Barnes — Notes on the New Testament",
+      "source": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=Barnes",
+      "notice": "Public-domain text. CrossWire SWORD edition; source attribution retained in the packaged sources manifest.",
+      "sources": [
+        {
+          "file": "Barnes.zip",
+          "url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/Barnes.zip",
+          "sha256": "9e8edc0333875c214124371b3862df118ad3a76ade7753cb2faeed3484615baf"
+        }
+      ],
+      "sword_configuration": "[Barnes]\nDataPath=./modules/comments/zcom/barnes/\nModDrv=zCom\nBlockType=CHAPTER\nCompressType=ZIP\nLang=en\nEncoding=UTF-8\nSourceType=ThML\nVersion=1.1\nHistory_1.1=Made numerous (mostly formatting) corrections and replaced some omitted cross-references\nDescription=Barnes' New Testament Notes\nAbout=Barnes' New Testament Notes\nDistributionLicense=Public Domain\nLCSH=Bible. N.T.--Commentaries.\nSwordVersionDate=2002-01-01\nInstallSize=6104575\n"
+    },
+    {
+      "kind": "sword",
+      "title": "Adam Clarke — Commentary",
+      "source": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=Clarke",
+      "notice": "Public-domain text. CrossWire SWORD edition; source attribution retained in the packaged sources manifest.",
+      "sources": [
+        {
+          "file": "Clarke.zip",
+          "url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/Clarke.zip",
+          "sha256": "56bb33d3bf0f50c1609f4dd10ac81e7450bb0e8aae93bf340074ccb5e207a44f"
+        }
+      ],
+      "sword_configuration": "## Sword module configuration file\n\n## Required elements\n# Module Unique Identifier.\n[Clarke]\n\n# Short description of the module.\nDescription=Adam Clarke's Commentary and critical notes on the Bible\n\n# Path to the module data files relative to the SWORD module library root directory.\nDataPath=./modules/comments/zcom/clarke/\n\n# Driver used for reading the module.\nModDrv=zCom\n\n## Required elements with defaults\n# Markup used in the module.\nSourceType=OSIS\n\n# How the text in the conf and in the module are encoded.\nEncoding=UTF-8\n\n# Compression algorithm.\nCompressType=ZIP\n\n# How much of the work is compressed into a block.\nBlockType=BOOK\n\n# Versification employed by a Bible module.\nVersification=KJV\n\n## Elements required for proper rendering\n# Filters.\nGlobalOptionFilter=OSISHeadings\nGlobalOptionFilter=OSISScripref\n\n## General informatic and installer elements\n# A lengthier description.\nAbout=Adam Clarke (1760 or 1762-1832) was a British Methodist theologian and Biblical scholar. He is primarily remembered for writing this commentary on the Bible. It took him 40 years to complete this work. Clarke adhered theologically to the Methodist founder John Wesley. Clarke's commentary is largely written from an orthodox Methodist perspective.\n\n# Indicates the date that the module was changed.\nSwordVersionDate=2021-10-19\n\n# Module's revision.\nVersion=2.0\n\n# Indicates what has changed between different versions.\nHistory_1.1=Remove extraneous whitespace\nHistory_1.2=Compressed module\nHistory_2.0=(2021-10-19) The source text of the Clarke module is lost. After extensive investigations, the only place where the text can still be found is sacredtext (and now wikisource). Clarke is missing from the resources proposed by CCEL. So, not having the source anymore, we thought it was relevant to compare the sacredtext with the current module. The samples we compared give the advantage to sacredtext especially for the biblical languages which are written in the original characters in the sacredtext text. But also because sacredtext has kept the introductions of the biblical books. The only advantage of the current module, which we will take the time to correct, concerns short text analysis at the end of some books and psalms. We have not been able to verify why these analyses are present in the module and not in the sacredtext. It still seems to us that the source of sacredtext and the module was the same, because we encountered the same errors reported on the bug tracker. Error that we can now correct and report to sacredtext which invites users to do so. But even more to do it yourself on wikisource which is finally the most appropriate place to store a public domain source. In conclusion, although the new text is quite close to the current module, it gives us the advantage of being able to benefit from a new source and thus to be able to correct possible gaps in the text, such as the one reported on the tracker, and above all it gives us access to the introduction that was missing from the current module.\n\n# The minimum version of the SWORD library required for this module.\nMinimumVersion=1.5.9\n\n# Library of Congress Subject Heading.\nLCSH=Commentary.English\n\n# Language code of the module.\nLang=en\n\n## Copyright and Licensing related elements\nDistributionLicense=Public Domain\nTextSource=https://en.wikisource.org/wiki/Commentary_and_critical_notes_on_the_Bible\n\n# Total byte size of the module on disk.\nInstallSize=8873357\n"
+    },
+    {
+      "kind": "sword",
+      "title": "Jamieson, Fausset & Brown — Commentary",
+      "source": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JFB",
+      "notice": "Public-domain text. CrossWire SWORD edition; source attribution retained in the packaged sources manifest.",
+      "sources": [
+        {
+          "file": "JFB.zip",
+          "url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/JFB.zip",
+          "sha256": "f5c8cfa8addb6451525eca4c6bd0b89e322146c2e9d10c768ae850dd05b2dbd8"
+        }
+      ],
+      "sword_configuration": "## Sword module configuration file\n\n## Required elements\n# Module Unique Identifier.\n[JFB]\n\n# Short well known abbreviation for the module (e.g., [KJV]).\nAbbreviation=JFB\n\n# Short description of the module.\nDescription=Jamieson Fausset Brown Bible Commentary\n\n# Path to the module data files relative to the SWORD module library root directory.\nDataPath=./modules/comments/zcom/jfb/\n\n# Driver used for reading the module.\nModDrv=zCom4\n\n## Required elements with defaults\n# Markup used in the module.\nSourceType=OSIS\n\n# How the text in the conf and in the module are encoded.\nEncoding=UTF-8\n\n# Compression algorithm.\nCompressType=ZIP\n\n# How much of the work is compressed into a block.\nBlockType=BOOK\n\n# Versification employed by a Bible module.\nVersification=KJV\n\n## Elements required for proper rendering\n# Filters.\nGlobalOptionFilter=OSISHeadings\nGlobalOptionFilter=OSISScripref\n\n# File in the module's DataPath that should be referenced for the renderer as CSS display controls.\nPreferredCSSXHTML=style.css\n\n## General informatic and installer elements\n# A lengthier description.\nAbout=Robert Jamieson, A. R. Fausset and David Brown\\par Commentary Critical and Explanatory on the Whole Bible (1871)\n\n# Indicates the date that the module was changed.\nSwordVersionDate=2021-02-15\n\n# Module's revision.\nVersion=3.0\n\n# Indicates what has changed between different versions.\nHistory_3.0=(2021-02-15) New source from https://ccel.org/. Solves MOD-54\nHistory_2.2=numerous corrections & heading corrections\nHistory_2.1=Changed to compressed module\nHistory_2.0=now in RawCom format rather than HREFCom, allowing the entire module to be copied locally rather than loaded through the CCEL website\n\n# The minimum version of the SWORD library required for this module.\nMinimumVersion=1.5.9\n\n# This is used by installers to further categorize the modules.\nCategory=Commentaries\n\n# Library of Congress Subject Heading.\nLCSH=Commentary .English\n\n# Language code of the module.\nLang=en\n\n## Copyright and Licensing related elements\nDistributionLicense=Public Domain\nTextSource=https://ccel.org/ccel/j/jamieson/jfb/cache/jfb.txt\n\n# Total byte size of the module on disk.\nInstallSize=612061\n"
+    },
+    {
+      "kind": "tsk",
+      "title": "Treasury of Scripture Knowledge",
+      "source": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=TSK",
+      "notice": "Public-domain text. CrossWire SWORD edition; source attribution retained in the packaged sources manifest.",
+      "sources": [
+        {
+          "file": "TSK.zip",
+          "url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/TSK.zip",
+          "sha256": "6784c7099465995a8e66f02ead82b0bca66603c1bdeaf8332949774b7bfd4293"
+        }
+      ],
+      "sword_configuration": "[TSK]\nDataPath=./modules/comments/zcom/tsk/\nModDrv=zCom\nBlockType=BOOK\nCompressType=ZIP\nSourceType=ThML\nLang=en\nVersion=1.4\nHistory_1.4=minor corrections to scripture references\nHistory_1.3=converted to ThML with formatting corrections\nHistory_1.1=added missing |'s after verse references\nDescription=Treasury of Scripture Knowledge\nAbout=Treasury of Scripture Knowledge: five-hundred thousand scripture references and parallel passages by Canne, Browne, Blayney, Scott, and others about 1880\nSwordVersionDate=2001-12-15\nLCSH=Bible--Cross references.\nDistributionLicense=Public Domain\nInstallSize=2869063\n"
+    },
+    {
+      "kind": "text",
+      "title": "J. C. Ryle — Expository Thoughts on the Gospels",
+      "source": "https://archive.org/details/expositorythough01ryle",
+      "notice": "Public-domain historical edition. Uncorrected scan OCR from Internet Archive and contributing libraries; original scan/Google credits retained. Greek, Hebrew, page headings and older type may contain recognition errors. Use Source / credits to consult the scan.",
+      "sources": [
+        {
+          "file": "expositorythough01ryle.txt",
+          "url": "https://archive.org/download/expositorythough01ryle/expositorythough01ryle_djvu.txt",
+          "sha256": "dd61c09c3f456394568489c94314ecea8612ab963d116238c463713075d5495d",
+          "label": "Matthew",
+          "source": "https://archive.org/details/expositorythough01ryle",
+          "edition": "1857"
+        },
+        {
+          "file": "expositorythough02ryle.txt",
+          "url": "https://archive.org/download/expositorythough02ryle/expositorythough02ryle_djvu.txt",
+          "sha256": "9054b7cb52aa90237d7cb9faa25477ab6e1f03c1fade367ad85d626ac2d32c03",
+          "label": "Mark",
+          "source": "https://archive.org/details/expositorythough02ryle",
+          "edition": "1857"
+        },
+        {
+          "file": "expositorythoug06rylegoog.txt",
+          "url": "https://archive.org/download/expositorythoug06rylegoog/expositorythoug06rylegoog_djvu.txt",
+          "sha256": "f775c20d185318928ace56158875ba69c835da94c6f54063aa018e6fceb13c60",
+          "label": "Luke · Volume I",
+          "source": "https://archive.org/details/expositorythoug06rylegoog",
+          "edition": "1858"
+        },
+        {
+          "file": "expositorythoug05rylegoog.txt",
+          "url": "https://archive.org/download/expositorythoug05rylegoog/expositorythoug05rylegoog_djvu.txt",
+          "sha256": "d88d31bcd1897ca1deeecc439c73dd64bb44f9d82eee4dcd031ca6398a8306e5",
+          "label": "Luke · Volume II",
+          "source": "https://archive.org/details/expositorythoug05rylegoog",
+          "edition": "1856"
+        },
+        {
+          "file": "expositorythough05ryle.txt",
+          "url": "https://archive.org/download/expositorythough05ryle/expositorythough05ryle_djvu.txt",
+          "sha256": "0f69f1d7f0f9a61e8e5e756acd8b9e93d839705c709fe25e8f2136b201a38252",
+          "label": "John · Volume I",
+          "source": "https://archive.org/details/expositorythough05ryle",
+          "edition": "1857"
+        },
+        {
+          "file": "expositorythough06ryle.txt",
+          "url": "https://archive.org/download/expositorythough06ryle/expositorythough06ryle_djvu.txt",
+          "sha256": "0b0adbb27b46a1c187099d329afe426a35d501dda0f2326d64e0112c976e3edd",
+          "label": "John · Volume II",
+          "source": "https://archive.org/details/expositorythough06ryle",
+          "edition": "1857"
+        },
+        {
+          "file": "expositorythough07ryle.txt",
+          "url": "https://archive.org/download/expositorythough07ryle/expositorythough07ryle_djvu.txt",
+          "sha256": "6aa687f8826120cee751d5fc086dd1c085019f7aac281328f35ae33a62dc0151",
+          "label": "John · Volume III",
+          "source": "https://archive.org/details/expositorythough07ryle",
+          "edition": "1857"
+        }
+      ]
+    },
+    {
+      "kind": "text",
+      "title": "Matthew Poole — Annotations upon the Holy Bible (1688)",
+      "source": "https://archive.org/details/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1",
+      "notice": "Public-domain historical edition. Uncorrected scan OCR from Internet Archive and contributing libraries; original scan/Google credits retained. Greek, Hebrew, page headings and older type may contain recognition errors. Use Source / credits to consult the scan.",
+      "sources": [
+        {
+          "file": "bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1.txt",
+          "url": "https://archive.org/download/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1_djvu.txt",
+          "sha256": "eb9b10bb7f7e6ae82ba772b2fb2af952e4faeb9787d564897a71ed1af03459cb",
+          "label": "Volume I",
+          "source": "https://archive.org/details/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1",
+          "edition": "1688"
+        },
+        {
+          "file": "bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2.txt",
+          "url": "https://archive.org/download/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2_djvu.txt",
+          "sha256": "20bd0c32030648438ae345ec973f65222ecc5c2d5a3badceefe01dabd49223b1",
+          "label": "Volume II",
+          "source": "https://archive.org/details/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2",
+          "edition": "1688"
+        }
+      ]
+    },
+    {
+      "kind": "text",
+      "title": "John Owen — Exposition of Hebrews (1840, four volumes)",
+      "source": "https://archive.org/details/expositionofepis184001owen",
+      "notice": "Public-domain historical edition. Uncorrected scan OCR from Internet Archive and contributing libraries; original scan/Google credits retained. Greek, Hebrew, page headings and older type may contain recognition errors. Use Source / credits to consult the scan.",
+      "sources": [
+        {
+          "file": "expositionofepis184001owen.txt",
+          "url": "https://archive.org/download/expositionofepis184001owen/expositionofepis184001owen_djvu.txt",
+          "sha256": "9534a4ce7ad6750d94df20720d9837ece34a8858d9bd006a5ed782d225cbac36",
+          "label": "Volume I · Preliminary Exercitations",
+          "source": "https://archive.org/details/expositionofepis184001owen",
+          "edition": "1839"
+        },
+        {
+          "file": "expositionofepis184002owen.txt",
+          "url": "https://archive.org/download/expositionofepis184002owen/expositionofepis184002owen_djvu.txt",
+          "sha256": "b9235c248c2257c5e73cf7e2a250c3293825aff21790a3d0c32f4aecf8b7deac",
+          "label": "Volume II · Hebrews 1–4",
+          "source": "https://archive.org/details/expositionofepis184002owen",
+          "edition": "1839"
+        },
+        {
+          "file": "expositionofepis184003owen.txt",
+          "url": "https://archive.org/download/expositionofepis184003owen/expositionofepis184003owen_djvu.txt",
+          "sha256": "357de2793956aee1fb0413e4c6b649bc7cc8fc2a231c7e2346a9ebc94571aa58",
+          "label": "Volume III · Hebrews 5–8",
+          "source": "https://archive.org/details/expositionofepis184003owen",
+          "edition": "1839"
+        },
+        {
+          "file": "anexpositionepi01unkngoog.txt",
+          "url": "https://archive.org/download/anexpositionepi01unkngoog/anexpositionepi01unkngoog_djvu.txt",
+          "sha256": "57ade50f803c39d70295f1b8a6ec6f78e9f369ef6341a02f1a789b01ef36c74a",
+          "label": "Volume IV · Hebrews 9–13",
+          "source": "https://archive.org/details/anexpositionepi01unkngoog",
+          "edition": "1839"
+        }
+      ]
+    }
+  ]
+}

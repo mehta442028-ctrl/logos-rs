@@ -96,3 +96,22 @@ fn frequencies_and_corpus_shape() {
     assert!(nt.span(search::VerseId { book: 43, chapter: 3, verse: 16 }).is_some());
     assert!(nt.span(search::VerseId { book: 1, chapter: 1, verse: 1 }).is_none());
 }
+
+#[test]
+fn word_study_counts_form_search_and_translation_previews() {
+    let Some((bible,ids))=open() else {return};
+    let kjv=ids["KJV"];let greek=ids["SBLGNT"];
+    let word=bible.words_with_strongs(greek,43,3,16,"G25").unwrap().remove(0);
+    let all=bible.word_search(kjv,"G25",None,None).unwrap();
+    let form=bible.word_search(kjv,"G25",Some(&word.morph),None).unwrap();
+    assert_eq!(all.len(),110);assert!(!form.is_empty());assert!(form.len()<all.len());
+    assert!(form.iter().any(|h|(h.book,h.chapter,h.verse)==(43,3,16)));
+    assert!(bible.original_occurrences("G25").unwrap()>=110);
+    assert!(bible.surface_occurrences(kjv,"God,").unwrap()>2000);
+    assert_eq!(bible.surface_occurrences(kjv,"God,").unwrap(),bible.surface_occurrences(kjv,"god").unwrap());
+    let exact=bible.word_search(kjv,"",None,Some("loved")).unwrap();
+    assert!(exact.iter().any(|h|(h.book,h.chapter,h.verse)==(43,3,16)));
+    let preview=bible.range_preview(kjv,43,3,16,3,17).unwrap();
+    assert!(preview.contains("3:16")&&preview.contains("3:17")&&preview.contains("For God so loved"));
+    let missing=bible.range_preview(greek,1,1,1,1,1).unwrap();assert!(missing.contains("not available"));
+}

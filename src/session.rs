@@ -32,6 +32,7 @@ pub struct Session {
     /// corpus on its own conventional default.
     pub threshold: Option<i64>,
     pub dark: bool,
+    pub text_size: f32,
     /// Window size in *logical* pixels — physical ones would be re-scaled by
     /// the display factor on restore, so a HiDPI window would double each run,
     /// and the file would not survive moving between screens.
@@ -53,6 +54,7 @@ impl Default for Session {
             reader: false,
             threshold: None,
             dark: true,
+            text_size: 17.0,
             width: None,
             height: None,
         }
@@ -101,6 +103,7 @@ mod tests {
         assert_eq!(s.chapter, 1); // defaulted
         assert!(s.scroll_lock); // defaulted, not false
         assert_eq!(s.threshold, None);
+        assert_eq!(s.text_size,17.0);
     }
 
     #[test]
