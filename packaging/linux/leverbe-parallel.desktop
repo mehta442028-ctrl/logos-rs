@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=LeVerbe Parallel
+GenericName=Bible Study
+Comment=Study up to four Bible translations side by side
+Exec=leverbe-parallel
+Icon=leverbe-parallel
+Terminal=false
+Categories=Education;Literature;
+Keywords=Bible;Scripture;Parallel;Hebrew;Greek;
+StartupWMClass=leverbe-parallel
