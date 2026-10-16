@@ -169,15 +169,20 @@ component VerseCell inherits Rectangle {
         flex-direction: root.verse-row.rtl ? row-reverse : row;
         for w in root.verse-row.words: Rectangle {
             min-width: 0px;
-            preferred-width: label.preferred-width + 6px;
-            preferred-height: label.preferred-height + 2px;
+            width: label.width + 6px;
+            height: label.preferred-height + 2px;
             border-radius: 4px;
             background: (root.column == root.selected-col && w.idx == root.selected-idx)
                 ? Theme.accent-bg : (wtouch.has-hover ? Theme.panel-alt : transparent);
+            measure := Text {
+                visible: false;
+                text: w.text;
+                font-size: Theme.reading-size;
+            }
             label := Text {
                 x: 3px;
                 y: 1px;
-                width: max(1px, parent.width - 6px);
+                width: min(measure.preferred-width, max(1px, words.width - 6px));
                 height: self.preferred-height;
                 text: w.text;
                 wrap: word-wrap;

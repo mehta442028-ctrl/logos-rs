@@ -35,6 +35,8 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - name: Build application and DOCX importer
         run: cargo build --release --locked --bin logos-rs --bin import --bin import-docx
       - name: Test
