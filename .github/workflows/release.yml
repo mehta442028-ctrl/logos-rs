@@ -67,11 +67,11 @@ jobs:
       - name: Check the package installs
         run: |
           apt-get install -y ./dist/*.deb
-          dpkg -L leverbe
-          test -f /usr/share/leverbe/bible.db
+          dpkg -L leverbe-parallel
+          test -f /usr/share/leverbe-parallel/bible.db
       - uses: actions/upload-artifact@v4
         with:
-          name: leverbe-deb
+          name: leverbe-parallel-deb
           path: dist/*.deb
           if-no-files-found: error
 
