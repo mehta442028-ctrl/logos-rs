@@ -13,7 +13,7 @@ pub fn personal_db_path() -> Result<PathBuf, Box<dyn std::error::Error>> {
 
 fn parse_book(s: &str) -> Option<i64> {
     let normalized = s.to_lowercase().chars().filter(|c| c.is_alphanumeric()).collect::<String>();
-    BOOKS.iter().find(|b| b.aliases.iter().any(|name| *name == normalized)
+    BOOKS.iter().find(|b| b.aliases.iter().any(|name| *name == normalized.as_str())
         || b.name.to_lowercase().chars().filter(|c| c.is_alphanumeric()).collect::<String>() == normalized)
         .map(|b| b.nr)
 }
