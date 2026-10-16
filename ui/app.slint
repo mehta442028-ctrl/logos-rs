@@ -633,6 +633,12 @@ export component MainWindow inherits Window {
     in property <[string]> translation-labels;
     in property <[string]> visibility-options;
     in-out property <bool> manage-translations;
+    in-out property <bool> show-import;
+    in-out property <string> import-path;
+    in-out property <string> import-code;
+    in-out property <string> import-name;
+    in-out property <string> import-lang: "nb";
+    in property <string> import-status;
     /// Which entry each picker starts on, so a restored session shows the
     /// text it actually opened.
     in property <int> primary-index;
@@ -704,6 +710,7 @@ export component MainWindow inherits Window {
     callback primary-changed(int);
     callback secondary-changed(int);
     callback toggle-translation-visibility(int);
+    callback import-docx(string, string, string, string);
     callback extra-changed(int, int);
     callback add-translation();
     callback remove-translation();
@@ -979,6 +986,37 @@ export component MainWindow inherits Window {
                                             clicked => { root.toggle-translation-visibility(i); }
                                         }
                                     }
+                                }
+                            }
+                        }
+                        Pill {
+                            label: root.show-import ? "Import DOCX ✓" : "Import Bible (.docx)";
+                            active: root.show-import;
+                            clicked => { root.show-import = !root.show-import; }
+                        }
+                        if root.show-import: Rectangle {
+                            background: Theme.panel-alt;
+                            height: 265px;
+                            VerticalLayout {
+                                padding: 7px;
+                                spacing: 5px;
+                                Text { text: "Absolute path to Logos-formatted .docx"; color: Theme.muted; font-size: 11px; }
+                                LineEdit { text <=> root.import-path; placeholder-text: "/home/user/Documents/bible.docx"; }
+                                Text { text: "Short code, e.g. NO1930CUSTOM"; color: Theme.muted; font-size: 11px; }
+                                LineEdit { text <=> root.import-code; placeholder-text: "NO1930CUSTOM"; }
+                                Text { text: "Translation name"; color: Theme.muted; font-size: 11px; }
+                                LineEdit { text <=> root.import-name; placeholder-text: "Bibelen 1930 (my edition)"; }
+                                Text { text: "Language code: nb, en, grc, hbo"; color: Theme.muted; font-size: 11px; }
+                                LineEdit { text <=> root.import-lang; }
+                                Pill {
+                                    label: "Import translation";
+                                    clicked => { root.import-docx(root.import-path, root.import-code, root.import-name, root.import-lang); }
+                                }
+                                Text {
+                                    text: root.import-status;
+                                    color: Theme.muted;
+                                    font-size: 11px;
+                                    wrap: word-wrap;
                                 }
                             }
                         }
