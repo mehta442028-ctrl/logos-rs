@@ -487,6 +487,8 @@ component ParallelColumns inherits Rectangle {
     in property <[VerseRow]> rows3;
     in property <[VerseRow]> rows4;
     in property <int> extra-count;
+    in property <string> subtitle3;
+    in property <string> subtitle4;
     in property <[PairRow]> pairs;
     in property <bool> parallel;
     in property <bool> scroll-lock;
@@ -534,7 +536,7 @@ component ParallelColumns inherits Rectangle {
         }
 
         if root.parallel && root.extra-count > 0: Text {
-            text: root.subtitle + "  |  " + root.subtitle2 + "  |  additional translations";
+            text: root.subtitle + "  |  " + root.subtitle2 + "  |  " + root.subtitle3 + (root.extra-count > 1 ? "  |  " + root.subtitle4 : "");
             color: Theme.muted;
             font-size: 12px;
         }
@@ -663,6 +665,8 @@ export component MainWindow inherits Window {
     in property <string> primary-title;
     in property <string> primary-subtitle;
     in property <string> secondary-title;
+    in property <string> third-title;
+    in property <string> fourth-title;
     in property <string> results-summary;
 
     in-out property <int> current-book;
@@ -1167,6 +1171,8 @@ export component MainWindow inherits Window {
                             rows3: root.rows3;
                             rows4: root.rows4;
                             extra-count: root.extra-count;
+                            subtitle3: root.third-title;
+                            subtitle4: root.fourth-title;
                             pairs: root.pairs;
                             parallel: root.parallel;
                             scroll-lock: root.scroll-lock;
