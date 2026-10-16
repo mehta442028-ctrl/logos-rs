@@ -104,7 +104,7 @@ jobs:
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y }
           & $iscc "/DAppVersion=${{ needs.version.outputs.version }}" `
-            "/DSourceDir=$PWD\dist\LeVerbe" "/DOutputDir=$PWD\dist" packaging\windows\leverbe.iss
+            "/DSourceDir=$PWD\dist\LeVerbeParallel" "/DOutputDir=$PWD\dist" packaging\windows\leverbe.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         with:
@@ -132,5 +132,5 @@ jobs:
           ls -la dist
           gh release create "$GITHUB_REF_NAME" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "LeVerbe ${{ needs.version.outputs.version }}" \
+            --title "LeVerbe Parallel ${{ needs.version.outputs.version }}" \
             --generate-notes
