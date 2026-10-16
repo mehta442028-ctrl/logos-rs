@@ -55,10 +55,22 @@ def refs(text,default_book=None,default_chapter=None):
 def download(source,cache):
     p=cache/source['file'];p.parent.mkdir(parents=True,exist_ok=True)
     if not p.exists():
-        print('Downloading',source['file'],flush=True)
-        with urllib.request.urlopen(source['url'],timeout=120) as r, p.with_suffix(p.suffix+'.part').open('wb') as f:
-            while block:=r.read(1024*1024):f.write(block)
-        p.with_suffix(p.suffix+'.part').replace(p)
+        errors=[]
+        for url in source.get('mirrors',[])+[source['url']]:
+            for attempt in range(2):
+                try:
+                    print('Downloading',source['file'],'from',urllib.parse.urlsplit(url).netloc,'attempt',attempt+1,flush=True)
+                    request=urllib.request.Request(url,headers={'User-Agent':'LeVerbe-Parallel-library-builder/1.0'})
+                    with urllib.request.urlopen(request,timeout=25) as r, p.with_suffix(p.suffix+'.part').open('wb') as f:
+                        while block:=r.read(1024*1024):f.write(block)
+                    if hashlib.sha256(p.with_suffix(p.suffix+'.part').read_bytes()).hexdigest()!=source['sha256']:
+                        raise RuntimeError('Checksum mismatch: '+source['file'])
+                    p.with_suffix(p.suffix+'.part').replace(p)
+                    break
+                except (OSError,urllib.error.URLError) as error:
+                    errors.append(str(error));print('Source connection failed:',source['file'],str(error),flush=True)
+            if p.exists():break
+        if not p.exists():raise RuntimeError('All public source mirrors failed for '+source['file']+': '+'; '.join(errors))
     if hashlib.sha256(p.read_bytes()).hexdigest()!=source['sha256']:raise RuntimeError('Checksum mismatch: '+source['file'])
     return p
 
@@ -92,6 +104,10 @@ def sword_entries(path):
             yield key,(testament,block,offset,length),uncompressed[offset:offset+length].decode(encoding,'replace')
 
 def build(manifest,cache,destination):
+    # Fetch independently so a slow archive connection cannot hold all other sources.
+    import concurrent.futures
+    sources=[s for w in manifest['works'] for s in w['sources']]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:list(pool.map(lambda s:download(s,cache),sources))
     destination.unlink(missing_ok=True)
     db=sqlite3.connect(destination)
     db.executescript('''PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;

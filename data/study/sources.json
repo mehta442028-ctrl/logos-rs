@@ -97,7 +97,11 @@
           "sha256": "dd61c09c3f456394568489c94314ecea8612ab963d116238c463713075d5495d",
           "label": "Matthew",
           "source": "https://archive.org/details/expositorythough01ryle",
-          "edition": "1857"
+          "edition": "1857",
+          "mirrors": [
+            "https://ia800802.us.archive.org/0/items/expositorythough01ryle/expositorythough01ryle_djvu.txt",
+            "https://ia600802.us.archive.org/0/items/expositorythough01ryle/expositorythough01ryle_djvu.txt"
+          ]
         },
         {
           "file": "expositorythough02ryle.txt",
@@ -105,7 +109,10 @@
           "sha256": "9054b7cb52aa90237d7cb9faa25477ab6e1f03c1fade367ad85d626ac2d32c03",
           "label": "Mark",
           "source": "https://archive.org/details/expositorythough02ryle",
-          "edition": "1857"
+          "edition": "1857",
+          "mirrors": [
+            "https://ia801509.us.archive.org/21/items/expositorythough02ryle/expositorythough02ryle_djvu.txt"
+          ]
         },
         {
           "file": "expositorythoug06rylegoog.txt",
@@ -113,7 +120,11 @@
           "sha256": "f775c20d185318928ace56158875ba69c835da94c6f54063aa018e6fceb13c60",
           "label": "Luke · Volume I",
           "source": "https://archive.org/details/expositorythoug06rylegoog",
-          "edition": "1858"
+          "edition": "1858",
+          "mirrors": [
+            "https://ia600907.us.archive.org/17/items/expositorythoug06rylegoog/expositorythoug06rylegoog_djvu.txt",
+            "https://ia800907.us.archive.org/17/items/expositorythoug06rylegoog/expositorythoug06rylegoog_djvu.txt"
+          ]
         },
         {
           "file": "expositorythoug05rylegoog.txt",
@@ -121,7 +132,11 @@
           "sha256": "d88d31bcd1897ca1deeecc439c73dd64bb44f9d82eee4dcd031ca6398a8306e5",
           "label": "Luke · Volume II",
           "source": "https://archive.org/details/expositorythoug05rylegoog",
-          "edition": "1856"
+          "edition": "1856",
+          "mirrors": [
+            "https://ia801602.us.archive.org/10/items/expositorythoug05rylegoog/expositorythoug05rylegoog_djvu.txt",
+            "https://ia601602.us.archive.org/10/items/expositorythoug05rylegoog/expositorythoug05rylegoog_djvu.txt"
+          ]
         },
         {
           "file": "expositorythough05ryle.txt",
@@ -129,7 +144,11 @@
           "sha256": "0f69f1d7f0f9a61e8e5e756acd8b9e93d839705c709fe25e8f2136b201a38252",
           "label": "John · Volume I",
           "source": "https://archive.org/details/expositorythough05ryle",
-          "edition": "1857"
+          "edition": "1857",
+          "mirrors": [
+            "https://ia800105.us.archive.org/31/items/expositorythough05ryle/expositorythough05ryle_djvu.txt",
+            "https://ia600105.us.archive.org/31/items/expositorythough05ryle/expositorythough05ryle_djvu.txt"
+          ]
         },
         {
           "file": "expositorythough06ryle.txt",
@@ -137,7 +156,11 @@
           "sha256": "0b0adbb27b46a1c187099d329afe426a35d501dda0f2326d64e0112c976e3edd",
           "label": "John · Volume II",
           "source": "https://archive.org/details/expositorythough06ryle",
-          "edition": "1857"
+          "edition": "1857",
+          "mirrors": [
+            "https://ia601604.us.archive.org/20/items/expositorythough06ryle/expositorythough06ryle_djvu.txt",
+            "https://ia801604.us.archive.org/20/items/expositorythough06ryle/expositorythough06ryle_djvu.txt"
+          ]
         },
         {
           "file": "expositorythough07ryle.txt",
@@ -145,7 +168,11 @@
           "sha256": "6aa687f8826120cee751d5fc086dd1c085019f7aac281328f35ae33a62dc0151",
           "label": "John · Volume III",
           "source": "https://archive.org/details/expositorythough07ryle",
-          "edition": "1857"
+          "edition": "1857",
+          "mirrors": [
+            "https://ia601600.us.archive.org/33/items/expositorythough07ryle/expositorythough07ryle_djvu.txt",
+            "https://ia801600.us.archive.org/33/items/expositorythough07ryle/expositorythough07ryle_djvu.txt"
+          ]
         }
       ]
     },
@@ -161,7 +188,11 @@
           "sha256": "eb9b10bb7f7e6ae82ba772b2fb2af952e4faeb9787d564897a71ed1af03459cb",
           "label": "Volume I",
           "source": "https://archive.org/details/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1",
-          "edition": "1688"
+          "edition": "1688",
+          "mirrors": [
+            "https://ia800707.us.archive.org/8/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1_djvu.txt",
+            "https://ia600707.us.archive.org/8/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_1_djvu.txt"
+          ]
         },
         {
           "file": "bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2.txt",
@@ -169,7 +200,11 @@
           "sha256": "20bd0c32030648438ae345ec973f65222ecc5c2d5a3badceefe01dabd49223b1",
           "label": "Volume II",
           "source": "https://archive.org/details/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2",
-          "edition": "1688"
+          "edition": "1688",
+          "mirrors": [
+            "https://ia801906.us.archive.org/19/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2_djvu.txt",
+            "https://ia601906.us.archive.org/19/items/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2/bim_early-english-books-1641-1700_annotations-upon-the-hol_poole-matthew_1688_2_djvu.txt"
+          ]
         }
       ]
     },
@@ -185,7 +220,11 @@
           "sha256": "9534a4ce7ad6750d94df20720d9837ece34a8858d9bd006a5ed782d225cbac36",
           "label": "Volume I · Preliminary Exercitations",
           "source": "https://archive.org/details/expositionofepis184001owen",
-          "edition": "1839"
+          "edition": "1839",
+          "mirrors": [
+            "https://ia802903.us.archive.org/1/items/expositionofepis184001owen/expositionofepis184001owen_djvu.txt",
+            "https://ia902903.us.archive.org/1/items/expositionofepis184001owen/expositionofepis184001owen_djvu.txt"
+          ]
         },
         {
           "file": "expositionofepis184002owen.txt",
@@ -193,7 +232,11 @@
           "sha256": "b9235c248c2257c5e73cf7e2a250c3293825aff21790a3d0c32f4aecf8b7deac",
           "label": "Volume II · Hebrews 1–4",
           "source": "https://archive.org/details/expositionofepis184002owen",
-          "edition": "1839"
+          "edition": "1839",
+          "mirrors": [
+            "https://ia800904.us.archive.org/28/items/expositionofepis184002owen/expositionofepis184002owen_djvu.txt",
+            "https://ia600904.us.archive.org/28/items/expositionofepis184002owen/expositionofepis184002owen_djvu.txt"
+          ]
         },
         {
           "file": "expositionofepis184003owen.txt",
@@ -201,7 +244,11 @@
           "sha256": "357de2793956aee1fb0413e4c6b649bc7cc8fc2a231c7e2346a9ebc94571aa58",
           "label": "Volume III · Hebrews 5–8",
           "source": "https://archive.org/details/expositionofepis184003owen",
-          "edition": "1839"
+          "edition": "1839",
+          "mirrors": [
+            "https://ia601608.us.archive.org/27/items/expositionofepis184003owen/expositionofepis184003owen_djvu.txt",
+            "https://ia801608.us.archive.org/27/items/expositionofepis184003owen/expositionofepis184003owen_djvu.txt"
+          ]
         },
         {
           "file": "anexpositionepi01unkngoog.txt",
@@ -209,7 +256,11 @@
           "sha256": "57ade50f803c39d70295f1b8a6ec6f78e9f369ef6341a02f1a789b01ef36c74a",
           "label": "Volume IV · Hebrews 9–13",
           "source": "https://archive.org/details/anexpositionepi01unkngoog",
-          "edition": "1839"
+          "edition": "1839",
+          "mirrors": [
+            "https://ia903108.us.archive.org/24/items/anexpositionepi01unkngoog/anexpositionepi01unkngoog_djvu.txt",
+            "https://ia803108.us.archive.org/24/items/anexpositionepi01unkngoog/anexpositionepi01unkngoog_djvu.txt"
+          ]
         }
       ]
     }
