@@ -36,19 +36,16 @@ export struct SearchItem {
     book: int, chapter: int, verse: int,
 }
 
-// Word-level (tagged original-language) structures. Verses are pre-wrapped
-// into lines on the Rust side (Slint has no flow layout).
+// Clickable words stay in canonical order and wrap to the measured cell width.
 export struct WordChip { idx: int, text: string, tagged: bool, rare: bool }
-export struct WordLine { words: [WordChip] }
 
 // One row of a reading column. A row is either plain prose (`text`) or a
-// sequence of clickable, morphology-tagged words (`lines`) — never both.
-// Both kinds share one model so that a column is a single ListView, which is
-// what lets the two columns lock their scroll positions to each other.
+// sequence of clickable, morphology-tagged words (`words`) — never both.
+// Linked mode places every translation in a single verse-aligned scroller.
 export struct VerseRow {
     verse: int,
     text: string,
-    lines: [WordLine],
+    words: [WordChip],
     tagged: bool,
     rtl: bool,
 }
@@ -65,10 +62,10 @@ export struct GlossItem {
     rtl: bool,
 }
 
-// One verse across both translations, for the locked parallel view. A cell
+// One verse across up to four translations, for the linked parallel view. A cell
 // whose `verse` is 0 is absent on that side — versification differs between
 // translations, so a verse can exist in one and not the other.
-export struct PairRow { verse: int, left: VerseRow, right: VerseRow }
+export struct PairRow { verse: int, left: VerseRow, right: VerseRow, third: VerseRow, fourth: VerseRow }
 
 export struct OriginalWord { text: string, parsing: string }
 export struct WordInfo {
@@ -161,18 +158,24 @@ component VerseCell inherits Rectangle {
             font-size: Theme.reading-size;
             wrap: word-wrap;
             horizontal-stretch: 1;
+            min-width: 0px;
+            preferred-width: 0px;
             horizontal-alignment: root.verse-row.rtl ? right : left;
             vertical-alignment: top;
         }
 
-        if root.verse-row.tagged: VerticalLayout {
+        if root.verse-row.tagged: FlexboxLayout {
             horizontal-stretch: 1;
-            spacing: 2px;
+            min-width: 0px;
+            preferred-width: 0px;
+            spacing-horizontal: 3px;
+            spacing-vertical: 2px;
             alignment: start;
-            for line in root.verse-row.lines: HorizontalLayout {
-                spacing: 3px;
-                alignment: root.verse-row.rtl ? end : start;
-                for w in line.words: Rectangle {
+            cross-axis-alignment: start;
+            cross-axis-line-alignment: start;
+            flex-direction: root.verse-row.rtl ? row-reverse : row;
+            for w in root.verse-row.words: Rectangle {
+                    min-width: 0px;
                     border-radius: 4px;
                     background: (root.column == root.selected-col && w.idx == root.selected-idx)
                         ? Theme.accent-bg
@@ -183,6 +186,8 @@ component VerseCell inherits Rectangle {
                         padding-right: 3px;
                         Text {
                             text: w.text;
+                            min-width: 0px;
+                            wrap: word-wrap;
                             font-size: Theme.reading-size;
                             color: w.tagged ? Theme.text : Theme.muted;
                         }
@@ -201,7 +206,6 @@ component VerseCell inherits Rectangle {
                         clicked => { root.pick(root.column, w.idx); }
                     }
                 }
-            }
         }
 
         if root.verse-row.verse > 0 && root.verse-row.tagged && root.verse-row.rtl: Text {
@@ -332,24 +336,21 @@ component PairedColumn inherits VerseScroller {
     in property <int> selected-idx;
     callback pick(int, int);
 
-    // A plain Rectangle per row, cells placed by hand — not a HorizontalLayout.
-    // A layout row would need each cell's height to size itself, each cell's
-    // height depends on its width (wrapped text), and the cell widths would be
-    // that same layout's own solved outputs: a height-for-width cycle Slint
-    // cannot resolve. Here the widths come straight from the row's width,
-    // which the body assigns in its width pass, independent of any height.
+    in property <int> column-count: 2;
     for p[i] in root.rows: Rectangle {
-        height: max(lcell.preferred-height, rcell.preferred-height);
-        // only the target row's timer runs; it reads y once layout has run
+        height: max(max(lcell.preferred-height, rcell.preferred-height),
+            max(root.column-count > 2 ? tcell.preferred-height : 0px,
+                root.column-count > 3 ? fcell.preferred-height : 0px));
         Timer {
             interval: 50ms;
             running: i == root.target-index;
             triggered => { root.land-at(parent.y); }
         }
         lcell := VerseCell {
-            x: 0;
-            y: 0;
-            width: (parent.width - 1px) / 2;
+            visible: root.column-count > 0;
+            x: parent.width * 0 / root.column-count;
+            y: 0px;
+            width: parent.width / root.column-count - 1px;
             height: parent.height;
             verse-row: p.left;
             column: 0;
@@ -358,17 +359,11 @@ component PairedColumn inherits VerseScroller {
             target: i == root.target-index;
             pick(c, i) => { root.pick(c, i); }
         }
-        Rectangle {
-            x: lcell.width;
-            y: 0;
-            width: 1px;
-            height: parent.height;
-            background: Theme.border;
-        }
         rcell := VerseCell {
-            x: lcell.width + 1px;
-            y: 0;
-            width: parent.width - lcell.width - 1px;
+            visible: root.column-count > 1;
+            x: parent.width * 1 / root.column-count;
+            y: 0px;
+            width: parent.width / root.column-count - 1px;
             height: parent.height;
             verse-row: p.right;
             column: 1;
@@ -376,6 +371,53 @@ component PairedColumn inherits VerseScroller {
             selected-idx: root.selected-idx;
             target: i == root.target-index;
             pick(c, i) => { root.pick(c, i); }
+        }
+        Rectangle {
+            visible: root.column-count > 1;
+            x: parent.width * 1 / root.column-count - 1px;
+            width: 1px;
+            height: parent.height;
+            background: Theme.border;
+        }
+        tcell := VerseCell {
+            visible: root.column-count > 2;
+            x: parent.width * 2 / root.column-count;
+            y: 0px;
+            width: parent.width / root.column-count - 1px;
+            height: parent.height;
+            verse-row: p.third;
+            column: 2;
+            selected-col: root.selected-col;
+            selected-idx: root.selected-idx;
+            target: i == root.target-index;
+            pick(c, i) => { root.pick(c, i); }
+        }
+        Rectangle {
+            visible: root.column-count > 2;
+            x: parent.width * 2 / root.column-count - 1px;
+            width: 1px;
+            height: parent.height;
+            background: Theme.border;
+        }
+        fcell := VerseCell {
+            visible: root.column-count > 3;
+            x: parent.width * 3 / root.column-count;
+            y: 0px;
+            width: parent.width / root.column-count - 1px;
+            height: parent.height;
+            verse-row: p.fourth;
+            column: 3;
+            selected-col: root.selected-col;
+            selected-idx: root.selected-idx;
+            target: i == root.target-index;
+            pick(c, i) => { root.pick(c, i); }
+        }
+        Rectangle {
+            visible: root.column-count > 3;
+            x: parent.width * 3 / root.column-count - 1px;
+            width: 1px;
+            height: parent.height;
+            background: Theme.border;
         }
     }
 }
@@ -506,39 +548,64 @@ component ParallelColumns inherits Rectangle {
         // never from a `width: parent.width / 2` binding: a fixed width is
         // part of an element's layout-info, and reading the parent's width
         // there asks a layout for its output while it is still being solved.
-        if root.parallel && root.extra-count == 0: HorizontalLayout {
-            height: 30px;
+        if root.parallel: HorizontalLayout {
+            height: 42px;
             Rectangle {
                 horizontal-stretch: 1;
                 preferred-width: 0px;
                 min-width: 0px;
+                clip: true;
                 Text {
                     text: root.subtitle;
                     color: Theme.muted;
-                    font-size: 13px;
+                    font-size: 12px;
+                    wrap: word-wrap;
                     horizontal-alignment: center;
                     vertical-alignment: center;
                 }
             }
-            Rectangle { width: 1px; background: Theme.border; }
             Rectangle {
                 horizontal-stretch: 1;
                 preferred-width: 0px;
                 min-width: 0px;
+                clip: true;
                 Text {
                     text: root.subtitle2;
                     color: Theme.muted;
-                    font-size: 13px;
+                    font-size: 12px;
+                    wrap: word-wrap;
                     horizontal-alignment: center;
                     vertical-alignment: center;
                 }
             }
-        }
-
-        if root.parallel && root.extra-count > 0: Text {
-            text: root.subtitle + "  |  " + root.subtitle2 + "  |  " + root.subtitle3 + (root.extra-count > 1 ? "  |  " + root.subtitle4 : "");
-            color: Theme.muted;
-            font-size: 12px;
+            if root.extra-count > 0: Rectangle {
+                horizontal-stretch: 1;
+                preferred-width: 0px;
+                min-width: 0px;
+                clip: true;
+                Text {
+                    text: root.subtitle3;
+                    color: Theme.muted;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            if root.extra-count > 1: Rectangle {
+                horizontal-stretch: 1;
+                preferred-width: 0px;
+                min-width: 0px;
+                clip: true;
+                Text {
+                    text: root.subtitle4;
+                    color: Theme.muted;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
         }
         if !root.parallel: ReadingColumn {
             rows: root.rows;
@@ -550,7 +617,8 @@ component ParallelColumns inherits Rectangle {
             pick(c, i) => { root.pick(c, i); }
         }
 
-        if root.parallel && root.scroll-lock && root.extra-count == 0: PairedColumn {
+        if root.parallel && root.scroll-lock: PairedColumn {
+            column-count: 2 + root.extra-count;
             rows: root.pairs;
             selected-col: root.selected-col;
             selected-idx: root.selected-idx;
@@ -561,7 +629,7 @@ component ParallelColumns inherits Rectangle {
 
         // Unlocked: two lists, each minding its own scroll position. Nothing
         // keeps them in step, which is the point.
-        if root.parallel && (!root.scroll-lock || root.extra-count > 0): HorizontalLayout {
+        if root.parallel && !root.scroll-lock: HorizontalLayout {
             ReadingColumn {
                 horizontal-stretch: 1;
                 preferred-width: 0px;

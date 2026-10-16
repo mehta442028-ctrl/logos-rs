@@ -839,11 +839,10 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
 
     let primary_rows: Vec<VerseRow>;
     if st.translations[primary].tagged {
-        let budget = if parallel { 32 } else { 60 };
         let max_freq = THRESHOLDS[st.threshold_idx.min(THRESHOLDS.len() - 1)];
         let reader = reader_on.then(|| Reader { freq: &st.freq, max_freq });
         let (rows, flat) =
-            tagged_rows(&st.bible, pid, book, chapter, primary_rtl, budget, reader.as_ref());
+            tagged_rows(&st.bible, pid, book, chapter, primary_rtl, reader.as_ref());
         primary_rows = rows;
         if let Some(r) = &reader {
             let notes = gloss_notes(&flat, r, primary_rtl);
@@ -871,7 +870,7 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
         // nothing to lay out when the second column is not on screen
         st.secondary_words.clear();
     } else if st.translations[secondary].tagged {
-        let (rows, flat) = tagged_rows(&st.bible, sid, book, chapter, secondary_rtl, 32, None);
+        let (rows, flat) = tagged_rows(&st.bible, sid, book, chapter, secondary_rtl, None);
         st.secondary_words = flat;
         secondary_rows = rows;
     } else {
@@ -880,19 +879,18 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
         st.secondary_words.clear();
     }
 
-    // Locked parallel reading is one list of paired verses rather than two
-    // lists kept in step, so only the view actually on screen is built.
+    // Linked reading uses one row per verse across every open translation.
     ui.set_third_title(st.extra.first().map(|&i| st.translations[i].name.as_str()).unwrap_or("").into());
     ui.set_fourth_title(st.extra.get(1).map(|&i| st.translations[i].name.as_str()).unwrap_or("").into());
-    // The existing verse-pair model locks two columns; larger groups use
-    // independent scrollers rather than silently omitting any translation.
+    // All open translations participate in the same verse-aligned model.
+    let mut extra_rows = Vec::new();
     for slot in 0..2 {
         let mut rows = Vec::new();
         let choice = if parallel { st.extra.get(slot).copied() } else { None };
         if let Some(index) = choice {
             let t = &st.translations[index];
             if t.tagged {
-                let (r, flat) = tagged_rows(&st.bible, t.id, book, chapter, t.rtl, 32, None);
+                let (r, flat) = tagged_rows(&st.bible, t.id, book, chapter, t.rtl, None);
                 rows = r;
                 st.extra_words[slot] = flat;
             } else {
@@ -902,16 +900,17 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
         } else {
             st.extra_words[slot].clear();
         }
+        extra_rows.push(rows.clone());
         if slot == 0 { ui.set_rows3(ModelRc::new(VecModel::from(rows))); }
         else { ui.set_rows4(ModelRc::new(VecModel::from(rows))); }
     }
-    let locked = parallel && st.extra.is_empty() && ui.get_scroll_lock();
+    let locked = parallel && ui.get_scroll_lock();
     // A search hit lands on its verse: hand the view the row index (rows are
     // in verse order but a translation may skip a verse, so look it up), or
     // -1 for the top of the chapter.
     let target = st.target_verse.take().map(|v| v as i32);
     if locked {
-        let pairs = pair_rows(&primary_rows, &secondary_rows);
+        let pairs = pair_rows(&primary_rows, &secondary_rows, &extra_rows);
         ui.set_target_index(row_index(pairs.iter().map(|p| p.verse), target));
         ui.set_pairs(ModelRc::new(VecModel::from(pairs)));
         ui.set_rows(ModelRc::new(VecModel::default()));
@@ -934,14 +933,7 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
     save_session(ui, &st);
 }
 
-/// Display width of a word, ignoring Hebrew points / Greek combining accents.
-fn display_width(s: &str) -> usize {
-    s.chars()
-        .filter(|c| !('\u{0300}'..='\u{036F}').contains(c) && !('\u{0591}'..='\u{05C7}').contains(c))
-        .count()
-}
-
-/// Build wrapped word rows for a tagged translation, plus the flat word list
+/// Build word rows for a tagged translation, plus the flat word list
 /// (indexed by the chip `idx` used for click lookups).
 fn tagged_rows(
     bible: &Bible,
@@ -949,7 +941,6 @@ fn tagged_rows(
     book: i64,
     chapter: i64,
     rtl: bool,
-    budget: usize,
     reader: Option<&Reader>,
 ) -> (Vec<VerseRow>, Vec<Word>) {
     let verses = bible.chapter(tid, book, chapter).unwrap_or_default();
@@ -959,44 +950,24 @@ fn tagged_rows(
     for v in &verses {
         let words = bible.words(tid, book, chapter, v.verse).unwrap_or_default();
         let base = flat.len();
-        // greedy line wrapping
-        let mut lines: Vec<WordLine> = Vec::new();
-        let mut cur: Vec<WordChip> = Vec::new();
-        let mut width = 0usize;
-        for (i, w) in words.iter().enumerate() {
-            let ww = display_width(&w.text) + 1;
-            if width + ww > budget && !cur.is_empty() {
-                lines.push(make_line(std::mem::take(&mut cur), rtl));
-                width = 0;
-            }
-            cur.push(WordChip {
-                idx: (base + i) as i32,
-                text: w.text.clone().into(),
-                tagged: !w.strongs.is_empty(),
-                rare: reader.is_some_and(|r| r.glosses(w)),
-            });
-            width += ww;
-        }
-        if !cur.is_empty() {
-            lines.push(make_line(cur, rtl));
-        }
+        // Keep canonical order; the UI wraps measured word chips to the
+        // actual cell width, including RTL and window/column size changes.
+        let chips: Vec<WordChip> = words.iter().enumerate().map(|(i, w)| WordChip {
+            idx: (base + i) as i32,
+            text: w.text.clone().into(),
+            tagged: !w.strongs.is_empty(),
+            rare: reader.is_some_and(|r| r.glosses(w)),
+        }).collect();
         flat.extend(words);
         blocks.push(VerseRow {
             verse: v.verse as i32,
             text: SharedString::default(),
-            lines: ModelRc::new(VecModel::from(lines)),
+            words: ModelRc::new(VecModel::from(chips)),
             tagged: true,
             rtl,
         });
     }
     (blocks, flat)
-}
-
-fn make_line(mut chips: Vec<WordChip>, rtl: bool) -> WordLine {
-    if rtl {
-        chips.reverse(); // right-to-left reading order within the line
-    }
-    WordLine { words: ModelRc::new(VecModel::from(chips)) }
 }
 
 /// The reader's-edition apparatus for one chapter: every lexeme rarer than the
@@ -1065,7 +1036,7 @@ fn plain_rows(verses: &[bible::Verse], rtl: bool) -> Vec<VerseRow> {
         .map(|v| VerseRow {
             verse: v.verse as i32,
             text: v.text.clone().into(),
-            lines: ModelRc::new(VecModel::default()),
+            words: ModelRc::new(VecModel::default()),
             tagged: false,
             rtl,
         })
@@ -1086,17 +1057,20 @@ fn row_index(verses: impl Iterator<Item = i32>, verse: Option<i32>) -> i32 {
 /// translations, so one may carry a verse the other does not. A missing side
 /// becomes an empty cell (`VerseRow::default()`, whose verse is 0) and the
 /// rest of the chapter stays aligned.
-fn pair_rows(left: &[VerseRow], right: &[VerseRow]) -> Vec<PairRow> {
-    let mut verses: Vec<i32> = left.iter().chain(right).map(|r| r.verse).collect();
+fn pair_rows(left: &[VerseRow], right: &[VerseRow], extra: &[Vec<VerseRow>]) -> Vec<PairRow> {
+    let columns: Vec<&[VerseRow]> = std::iter::once(left).chain(std::iter::once(right))
+        .chain(extra.iter().map(Vec::as_slice)).collect();
+    let mut verses: Vec<i32> = columns.iter().flat_map(|rows| rows.iter().map(|r| r.verse)).collect();
     verses.sort_unstable();
     verses.dedup();
-    let cell = |rows: &[VerseRow], v: i32| {
-        rows.iter().find(|r| r.verse == v).cloned().unwrap_or_default()
+    let cell = |col: usize, verse: i32| {
+        columns.get(col).and_then(|rows| rows.iter().find(|r| r.verse == verse))
+            .cloned().unwrap_or_default()
     };
-    verses
-        .iter()
-        .map(|&v| PairRow { verse: v, left: cell(left, v), right: cell(right, v) })
-        .collect()
+    verses.into_iter().map(|verse| PairRow {
+        verse, left: cell(0, verse), right: cell(1, verse),
+        third: cell(2, verse), fourth: cell(3, verse),
+    }).collect()
 }
 
 /// Move the current chapter by `delta`, rolling over to adjacent books.
@@ -1337,4 +1311,99 @@ fn mark_words(corpus: &Corpus, verse: &VerseId, pick: impl Fn(usize, &search::Wo
         })
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+#[cfg(test)]
+mod layout_tests {
+    use super::*;
+    use i_slint_backend_testing::{ElementQuery, TestingBackend, TestingBackendOptions};
+
+    fn verse(n: i32, text: &str, tagged: bool, rtl: bool) -> VerseRow {
+        VerseRow {
+            verse: n, text: text.into(), tagged, rtl,
+            words: ModelRc::new(VecModel::from(text.split_whitespace().enumerate()
+                .map(|(idx, text)| WordChip { idx: idx as i32, text: text.into(),
+                    tagged: true, rare: false }).collect::<Vec<_>>())),
+        }
+    }
+
+    #[test]
+    fn linked_rows_include_verses_from_every_column() {
+        let left = vec![verse(1, "one", false, false)];
+        let right = vec![verse(2, "two", false, false)];
+        let extra = vec![vec![verse(3, "three", false, false)], vec![verse(4, "four", false, false)]];
+        let rows = pair_rows(&left, &right, &extra);
+        assert_eq!(rows.iter().map(|r| r.verse).collect::<Vec<_>>(), vec![1, 2, 3, 4]);
+        assert_eq!(rows[2].third.text.as_str(), "three");
+        assert_eq!(rows[3].fourth.text.as_str(), "four");
+        assert_eq!(rows[3].left.verse, 0);
+        assert_eq!(rows[0].fourth.verse, 0);
+    }
+
+    #[test]
+    fn text_fits_and_linked_columns_scroll_together() {
+        slint::platform::set_platform(Box::new(TestingBackend::new(TestingBackendOptions {
+            renderer_name: Some("software".into()), ..Default::default()
+        }))).unwrap();
+        let ui = MainWindow::new().unwrap();
+        ui.set_parallel(true);
+        ui.set_scroll_lock(true);
+        let text = "In the beginning God created the heavens and the earth. ".repeat(6);
+        let hebrew = "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ ".repeat(6);
+        let plain: Vec<_> = (1..=20).map(|n| verse(n, &text, false, false)).collect();
+        let tagged: Vec<_> = (1..=20).map(|n| verse(n, &text, true, false)).collect();
+        let rtl: Vec<_> = (1..=20).map(|n| verse(n, &hebrew, true, true)).collect();
+        ui.show().unwrap();
+        for count in 2..=4 {
+            ui.set_extra_count(count - 2);
+            ui.set_pairs(ModelRc::new(VecModel::from(pair_rows(&plain, &tagged,
+                &[rtl.clone(), plain.clone()]))));
+            for width in [720., 1200., 1600.] {
+                ui.window().set_size(slint::LogicalSize::new(width, 900.));
+                let snapshot = ui.window().take_snapshot().unwrap();
+                if let Ok(dir) = std::env::var("LAYOUT_SNAPSHOTS") {
+                    std::fs::create_dir_all(&dir).unwrap();
+                    let mut ppm = format!("P6\n{} {}\n255\n", snapshot.width(), snapshot.height()).into_bytes();
+                    for pixel in snapshot.as_bytes().chunks_exact(4) { ppm.extend_from_slice(&pixel[..3]); }
+                    std::fs::write(format!("{dir}/columns-{count}-width-{width}.ppm"), ppm).unwrap();
+                }
+                let scrollers = ElementQuery::from_root(&ui).match_inherits("PairedColumn").find_all();
+                assert_eq!(scrollers.len(), 1, "all linked Bibles must use one scroller");
+                assert!(ElementQuery::from_root(&ui).match_inherits("ReadingColumn").find_all().is_empty());
+                let cells = ElementQuery::from_root(&ui).match_inherits("VerseCell").find_all();
+                assert!(!cells.is_empty());
+                for cell in &cells {
+                    let pos = cell.absolute_position();
+                    let size = cell.size();
+                    // Inactive third/fourth cells are outside the live grid.
+                    if pos.x >= width || size.width <= 0. { continue; }
+                    for t in cell.query_descendants().match_inherits("Text").find_all() {
+                        let tp = t.absolute_position();
+                        assert!(tp.x >= pos.x - 1. && tp.x + t.size().width <= pos.x + size.width + 1.,
+                            "text overflows cell: window={width}, columns={count}, cell={pos:?}/{size:?}, text={tp:?}/{:?}", t.size());
+                    }
+                }
+                // A wheel gesture over any column moves the entire verse grid.
+                let first = ElementQuery::from_root(&ui).match_id("PairedColumn::lcell").find_first().unwrap();
+                let before = first.absolute_position().y;
+                scrollers[0].scroll(0., -120.);
+                ui.window().take_snapshot().unwrap();
+                let after = first.absolute_position().y;
+                assert!(after < before, "linked wheel scrolling did not move verses");
+                for id in ["PairedColumn::rcell", "PairedColumn::tcell", "PairedColumn::fcell"].iter().take(count as usize - 1) {
+                    let other = ElementQuery::from_root(&ui).match_id(*id).find_first().unwrap();
+                    assert!((other.absolute_position().y - after).abs() < 1.);
+                }
+                ui.set_nav_epoch(ui.get_nav_epoch() + 1);
+            }
+        }
+        ui.set_scroll_lock(false);
+        ui.set_rows(ModelRc::new(VecModel::from(plain.clone())));
+        ui.set_rows2(ModelRc::new(VecModel::from(plain.clone())));
+        ui.set_rows3(ModelRc::new(VecModel::from(plain.clone())));
+        ui.set_rows4(ModelRc::new(VecModel::from(plain)));
+        ui.window().take_snapshot().unwrap();
+        assert!(ElementQuery::from_root(&ui).match_inherits("PairedColumn").find_all().is_empty());
+        assert_eq!(ElementQuery::from_root(&ui).match_inherits("ReadingColumn").find_all().len(), 4);
+    }
 }

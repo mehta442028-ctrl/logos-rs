@@ -38,7 +38,15 @@ jobs:
       - name: Build application and DOCX importer
         run: cargo build --release --locked --bin logos-rs --bin import --bin import-docx
       - name: Test
+        env:
+          LAYOUT_SNAPSHOTS: layout-snapshots
         run: cargo test --release --locked
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel-layout-snapshots
+          path: layout-snapshots/*.ppm
+          if-no-files-found: ignore
       - name: Build bundled Bible database
         run: ./target/release/import
       - name: Test original-language search against bundled database

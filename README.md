@@ -10,10 +10,10 @@ study experience that runs natively on Linux with a cleaner, faster UX.
 
 - **Reading view** with hanging-indent verse numbers and a Logos-style three-pane
   layout (translation/book/chapter nav · reading pane).
-- **Parallel view** — read two translations side by side, genuinely aligned:
-  locked (the default) renders both texts as a *single* list of paired verses,
+- **Parallel view** — read two to four translations side by side, aligned by verse:
+  locked (the default) renders all open texts as a *single* list of aligned verses,
   so verse N always sits beside verse N and the columns cannot drift apart. The
-  **🔗 Linked** pill unlocks them into two independent scrollers.
+  **🔗 Linked** pill switches them to independent scrollers. Text wraps to each column as the window is resized.
 - **Search** — `Ctrl+F` jumps to the search box from anywhere. Hits are listed
   in canonical order (Genesis → Revelation), and opening one lands on that verse,
   tinted, rather than at the top of its chapter; **☰ Results** in the header
