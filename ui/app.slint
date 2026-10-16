@@ -168,7 +168,6 @@ component VerseCell inherits Rectangle {
         cross-axis-line-alignment: start;
         flex-direction: root.verse-row.rtl ? row-reverse : row;
         for w in root.verse-row.words: Rectangle {
-            min-width: 0px;
             width: label.width + 6px;
             height: label.preferred-height + 2px;
             border-radius: 4px;
@@ -211,7 +210,7 @@ component VerseCell inherits Rectangle {
 // height estimate and recycles row instances, so there is no way to put a
 // given row at the top for certain — a search hit would land a verse or two
 // off. With a real layout each row's `y` is exact and stable, and landing on a
-// verse is simply `viewport-y = -y`.
+// verse is simply `content-y = -y`.
 //
 // Rows publish their `y` when the layout assigns it; the timer reads it a
 // moment later, once layout has run.
@@ -242,13 +241,13 @@ component VerseScroller inherits Rectangle {
             return;
         }
         // never past the end: the last verses cannot reach the top
-        list.viewport-y = max(-y, list.visible-height - list.viewport-height);
+        list.content-y = max(-y, list.visible-height - list.content-height);
         root.seeking = false;
     }
 
     property <int> epoch-watch: root.nav-epoch;
     changed epoch-watch => {
-        list.viewport-y = 0px;
+        list.content-y = 0px;
         root.seeking = root.target-index >= 0;
     }
     // Created with a target already set (the locked/unlocked views swapping):
@@ -270,8 +269,8 @@ component VerseScroller inherits Rectangle {
         // The Flickable does not size its viewport from a layout placed here
         // through @children, so bind it: the content is exactly as tall as
         // the rows, and no wider than the view (so prose wraps to it).
-        viewport-width: self.visible-width;
-        viewport-height: body.preferred-height;
+        content-width: self.visible-width;
+        content-height: body.preferred-height;
         body := VerticalLayout {
             width: list.visible-width;
             @children
@@ -1154,15 +1153,15 @@ export component MainWindow inherits Window {
                         }
                         // Sizes to fit all chapters; caps and scrolls only when the
                         // grid would get too tall (e.g. Psalms' 150 chapters).
-                        // viewport-height must be set explicitly: the cells are
+                        // content-height must be set explicitly: the cells are
                         // absolutely positioned, so the ScrollView can't infer it.
                         csv := ScrollView {
                             property <int> cols: 7;
                             property <length> cell: 34px;
                             property <length> content-h: Math.ceil(root.chapters.length / self.cols) * self.cell;
                             visible: root.chapters.length > 0;
-                            viewport-width: self.cols * self.cell;
-                            viewport-height: self.content-h;
+                            content-width: self.cols * self.cell;
+                            content-height: self.content-h;
                             height: Math.min(self.content-h + 2px, 300px);
                             for ch[i] in root.chapters: Rectangle {
                                 x: Math.mod(i, csv.cols) * csv.cell;
@@ -1224,7 +1223,7 @@ export component MainWindow inherits Window {
                             // back to the top for a new search only; coming
                             // back from a hit keeps the place
                             property <int> search-watch: root.search-epoch;
-                            changed search-watch => { self.viewport-y = 0px; }
+                            changed search-watch => { self.content-y = 0px; }
                             for r[i] in root.results: Rectangle {
                                 height: rlayout.preferred-height;
                                 background: rtouch.has-hover ? Theme.panel : transparent;
