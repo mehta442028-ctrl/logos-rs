@@ -1,6 +1,6 @@
 //! Import a Logos Personal Book DOCX containing [[@Bible...:book chapter:verse]]
 //! milestones. The user's Bible database is separate from the installed package.
-use std::{collections::{BTreeMap, HashSet}, path::{Path, PathBuf}, process::Command};
+use std::{collections::BTreeMap, path::{Path, PathBuf}, process::Command};
 use regex::Regex;
 use rusqlite::{Connection, params};
 use crate::canon::{BOOKS, Section};
