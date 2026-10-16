@@ -20,6 +20,8 @@ struct State {
     translations: Vec<Translation>,
     primary: usize,
     secondary: usize,
+    extra: Vec<usize>,
+    extra_words: Vec<Vec<Word>>,
     primary_books: Vec<Book>,
     book: i64,
     chapter: i64,
@@ -173,6 +175,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .iter()
         .position(|t| t.code == saved.secondary)
         .unwrap_or(if translations.len() > 1 { 1 } else { 0 });
+    let extra: Vec<usize> = saved.extra_translations.iter().take(2)
+        .filter_map(|code| translations.iter().position(|t| &t.code == code)).collect();
     let primary_books = bible.books(translations[primary].id)?;
     // The saved book may not exist in this translation (the NT-only texts, a
     // rebuilt database); fall back to its first book, and to its opening
@@ -193,6 +197,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         translations,
         primary,
         secondary,
+        extra,
+        extra_words: vec![Vec::new(), Vec::new()],
         primary_books,
         book,
         chapter,
@@ -212,6 +218,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ui = MainWindow::new()?;
     restore(&ui, &saved, primary, secondary);
+    ui.set_extra_count(state.borrow().extra.len() as i32);
+    update_extra_indices(&ui, &state.borrow());
 
     // Warm the advanced search: load the Hebrew, the Greek and the current
     // translation in the background so the first query is instant.
@@ -361,6 +369,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     {
         let (w, state) = ctx!();
+        ui.on_add_translation(move || {
+            let ui = w.unwrap();
+            {
+                let mut st = state.borrow_mut();
+                if st.extra.len() < 2 {
+                    let selected: HashSet<usize> = std::iter::once(st.primary)
+                        .chain(std::iter::once(st.secondary))
+                        .chain(st.extra.iter().copied()).collect();
+                    let candidate = (0..st.translations.len()).find(|i| !selected.contains(i)).unwrap_or(st.primary);
+                    st.extra.push(candidate);
+                }
+                ui.set_extra_count(st.extra.len() as i32);
+                update_extra_indices(&ui, &st);
+            }
+            refresh_reading(&ui, &state);
+        });
+    }
+    {
+        let (w, state) = ctx!();
+        ui.on_remove_translation(move || {
+            let ui = w.unwrap();
+            let mut st = state.borrow_mut();
+            st.extra.pop();
+            ui.set_extra_count(st.extra.len() as i32);
+            drop(st);
+            refresh_reading(&ui, &state);
+        });
+    }
+    {
+        let (w, state) = ctx!();
+        ui.on_extra_changed(move |slot, index| {
+            let ui = w.unwrap();
+            let mut st = state.borrow_mut();
+            if let Some(selected) = st.extra.get_mut(slot as usize) {
+                *selected = index.max(0) as usize;
+            }
+            drop(st);
+            refresh_reading(&ui, &state);
+        });
+    }
+    {
+        let (w, state) = ctx!();
         ui.on_toggle_parallel(move || {
             let ui = w.unwrap();
             ui.set_parallel(!ui.get_parallel());
@@ -463,9 +513,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ui.on_word_clicked(move |col, idx| {
             let ui = w.unwrap();
             let st = state.borrow();
-            let tindex = if col == 0 { st.primary } else { st.secondary };
+            let tindex = match col {
+                0 => st.primary,
+                1 => st.secondary,
+                n => match st.extra.get((n - 2) as usize) { Some(i) => *i, None => return },
+            };
             let trans = st.translations[tindex].clone();
-            let words = if col == 0 { &st.primary_words } else { &st.secondary_words };
+            let words = match col {
+                0 => &st.primary_words,
+                1 => &st.secondary_words,
+                n => match st.extra_words.get((n - 2) as usize) { Some(w) => w, None => return },
+            };
             let Some(word) = words.get(idx as usize).cloned() else { return };
 
             // A modern-language translation (KJV/ULT/LSG…) — as opposed to the
@@ -576,6 +634,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Put the window back the way it was left, before the first refresh reads
 /// these flags.
+fn update_extra_indices(ui: &MainWindow, st: &State) {
+    ui.set_third_index(st.extra.first().copied().unwrap_or(0) as i32);
+    ui.set_fourth_index(st.extra.get(1).copied().unwrap_or(0) as i32);
+}
+
 fn restore(ui: &MainWindow, saved: &Session, primary: usize, secondary: usize) {
     ui.global::<Theme>().set_dark(saved.dark);
     ui.set_parallel(saved.parallel);
@@ -609,6 +672,7 @@ fn snapshot(ui: &MainWindow, st: &State) -> Session {
     Session {
         primary: st.translations[st.primary].code.clone(),
         secondary: st.translations[st.secondary].code.clone(),
+        extra_translations: st.extra.iter().map(|&i| st.translations[i].code.clone()).collect(),
         book: st.book,
         chapter: st.chapter,
         parallel: ui.get_parallel(),
@@ -731,7 +795,28 @@ fn refresh_reading(ui: &MainWindow, state: &Rc<RefCell<State>>) {
 
     // Locked parallel reading is one list of paired verses rather than two
     // lists kept in step, so only the view actually on screen is built.
-    let locked = parallel && ui.get_scroll_lock();
+    // The existing verse-pair model locks two columns; larger groups use
+    // independent scrollers rather than silently omitting any translation.
+    for slot in 0..2 {
+        let mut rows = Vec::new();
+        let choice = if parallel { st.extra.get(slot).copied() } else { None };
+        if let Some(index) = choice {
+            let t = &st.translations[index];
+            if t.tagged {
+                let (r, flat) = tagged_rows(&st.bible, t.id, book, chapter, t.rtl, 32, None);
+                rows = r;
+                st.extra_words[slot] = flat;
+            } else {
+                rows = plain_rows(&st.bible.chapter(t.id, book, chapter).unwrap_or_default(), t.rtl);
+                st.extra_words[slot].clear();
+            }
+        } else {
+            st.extra_words[slot].clear();
+        }
+        if slot == 0 { ui.set_rows3(ModelRc::new(VecModel::from(rows))); }
+        else { ui.set_rows4(ModelRc::new(VecModel::from(rows))); }
+    }
+    let locked = parallel && st.extra.is_empty() && ui.get_scroll_lock();
     // A search hit lands on its verse: hand the view the row index (rows are
     // in verse order but a translation may skip a verse, so look it up), or
     // -1 for the top of the chapter.
