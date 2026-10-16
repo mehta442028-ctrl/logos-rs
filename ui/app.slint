@@ -131,91 +131,70 @@ component VerseCell inherits Rectangle {
             ? Theme.panel
             : transparent;
 
-    HorizontalLayout {
-        padding: root.verse-row.tagged ? 5px : 4px;
-        padding-left: 14px;
-        padding-right: 14px;
-        spacing: root.verse-row.tagged ? 8px : 10px;
-
-        // verse number — leading, except for right-to-left word rows
-        if root.verse-row.verse > 0 && (!root.verse-row.tagged || !root.verse-row.rtl): Text {
-            text: root.verse-row.verse;
-            width: root.verse-row.tagged ? 26px : 30px;
-            color: Theme.verse-num;
-            font-size: 12px;
-            horizontal-alignment: right;
-            vertical-alignment: top;
-            // nudge the small number to sit on the text baseline
-            y: root.verse-row.tagged ? 4px : 3px;
-        }
-
-        // In a paired row the shorter side is given the taller side's height;
-        // the text must sit at the top of that space, not be spread through
-        // it — hence top alignment here and `alignment: start` below.
-        if !root.verse-row.tagged: Text {
-            text: root.verse-row.text;
-            color: Theme.text;
-            font-size: Theme.reading-size;
-            wrap: word-wrap;
-            horizontal-stretch: 1;
+    preferred-height: max(number.preferred-height,
+        root.verse-row.tagged ? words.preferred-height : prose.preferred-height) + 10px;
+    number := Text {
+        visible: root.verse-row.verse > 0;
+        x: root.verse-row.rtl ? root.width - 40px : 14px;
+        y: 8px;
+        width: 26px;
+        text: root.verse-row.verse;
+        color: Theme.verse-num;
+        font-size: 12px;
+        horizontal-alignment: right;
+    }
+    prose := Text {
+        visible: !root.verse-row.tagged;
+        x: root.verse-row.rtl ? 14px : 48px;
+        y: 5px;
+        width: max(1px, root.width - 62px);
+        height: self.preferred-height;
+        text: root.verse-row.text;
+        color: Theme.text;
+        font-size: Theme.reading-size;
+        wrap: word-wrap;
+        horizontal-alignment: root.verse-row.rtl ? right : left;
+    }
+    words := FlexboxLayout {
+        visible: root.verse-row.tagged;
+        x: root.verse-row.rtl ? 14px : 48px;
+        y: 5px;
+        width: max(1px, root.width - 62px);
+        height: self.preferred-height;
+        spacing-horizontal: 3px;
+        spacing-vertical: 2px;
+        alignment: start;
+        cross-axis-alignment: start;
+        cross-axis-line-alignment: start;
+        flex-direction: root.verse-row.rtl ? row-reverse : row;
+        for w in root.verse-row.words: Rectangle {
             min-width: 0px;
-            preferred-width: 0px;
-            horizontal-alignment: root.verse-row.rtl ? right : left;
-            vertical-alignment: top;
-        }
-
-        if root.verse-row.tagged: FlexboxLayout {
-            horizontal-stretch: 1;
-            min-width: 0px;
-            preferred-width: 0px;
-            spacing-horizontal: 3px;
-            spacing-vertical: 2px;
-            alignment: start;
-            cross-axis-alignment: start;
-            cross-axis-line-alignment: start;
-            flex-direction: root.verse-row.rtl ? row-reverse : row;
-            for w in root.verse-row.words: Rectangle {
-                    min-width: 0px;
-                    border-radius: 4px;
-                    background: (root.column == root.selected-col && w.idx == root.selected-idx)
-                        ? Theme.accent-bg
-                        : (wtouch.has-hover ? Theme.panel-alt : transparent);
-                    HorizontalLayout {
-                        padding: 1px;
-                        padding-left: 3px;
-                        padding-right: 3px;
-                        Text {
-                            text: w.text;
-                            min-width: 0px;
-                            wrap: word-wrap;
-                            font-size: Theme.reading-size;
-                            color: w.tagged ? Theme.text : Theme.muted;
-                        }
-                    }
-                    // Reader's edition: a rule under the words the apparatus
-                    // below glosses. Slint has no text underline, so it is
-                    // drawn.
-                    if w.rare: Rectangle {
-                        x: 2px;
-                        y: parent.height - 2px;
-                        width: parent.width - 4px;
-                        height: 1px;
-                        background: Theme.accent;
-                    }
-                    wtouch := TouchArea {
-                        clicked => { root.pick(root.column, w.idx); }
-                    }
-                }
-        }
-
-        if root.verse-row.verse > 0 && root.verse-row.tagged && root.verse-row.rtl: Text {
-            text: root.verse-row.verse;
-            width: 26px;
-            color: Theme.verse-num;
-            font-size: 12px;
-            y: 4px;
+            preferred-width: label.preferred-width + 6px;
+            preferred-height: label.preferred-height + 2px;
+            border-radius: 4px;
+            background: (root.column == root.selected-col && w.idx == root.selected-idx)
+                ? Theme.accent-bg : (wtouch.has-hover ? Theme.panel-alt : transparent);
+            label := Text {
+                x: 3px;
+                y: 1px;
+                width: max(1px, parent.width - 6px);
+                height: self.preferred-height;
+                text: w.text;
+                wrap: word-wrap;
+                font-size: Theme.reading-size;
+                color: w.tagged ? Theme.text : Theme.muted;
+            }
+            if w.rare: Rectangle {
+                x: 2px;
+                y: parent.height - 2px;
+                width: parent.width - 4px;
+                height: 1px;
+                background: Theme.accent;
+            }
+            wtouch := TouchArea { clicked => { root.pick(root.column, w.idx); } }
         }
     }
+
 }
 
 // ---------------------------------------------------------------------------
