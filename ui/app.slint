@@ -131,13 +131,14 @@ component VerseCell inherits Rectangle {
             ? Theme.panel
             : transparent;
 
+    property <length> gutter: min(40px, root.width / 4);
     preferred-height: max(number.preferred-height,
         root.verse-row.tagged ? words.preferred-height : prose.preferred-height) + 10px;
     number := Text {
         visible: root.verse-row.verse > 0;
-        x: root.verse-row.rtl ? root.width - 40px : 14px;
+        x: root.verse-row.rtl ? root.width - 8px - self.width : 8px;
         y: 8px;
-        width: 26px;
+        width: min(24px, root.width / 6);
         text: root.verse-row.verse;
         color: Theme.verse-num;
         font-size: 12px;
@@ -145,9 +146,9 @@ component VerseCell inherits Rectangle {
     }
     prose := Text {
         visible: !root.verse-row.tagged;
-        x: root.verse-row.rtl ? 14px : 48px;
+        x: root.verse-row.rtl ? 8px : root.gutter;
         y: 5px;
-        width: max(1px, root.width - 62px);
+        width: max(1px, root.width - root.gutter - 8px);
         height: self.preferred-height;
         text: root.verse-row.text;
         color: Theme.text;
@@ -157,9 +158,9 @@ component VerseCell inherits Rectangle {
     }
     words := FlexboxLayout {
         visible: root.verse-row.tagged;
-        x: root.verse-row.rtl ? 14px : 48px;
+        x: root.verse-row.rtl ? 8px : root.gutter;
         y: 5px;
-        width: max(1px, root.width - 62px);
+        width: max(1px, root.width - root.gutter - 8px);
         height: self.preferred-height;
         spacing-horizontal: 3px;
         spacing-vertical: 2px;

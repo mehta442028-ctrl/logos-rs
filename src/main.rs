@@ -1358,14 +1358,15 @@ mod layout_tests {
             ui.set_extra_count(count - 2);
             ui.set_pairs(ModelRc::new(VecModel::from(pair_rows(&plain, &tagged,
                 &[rtl.clone(), plain.clone()]))));
-            for width in [720., 1200., 1600.] {
+            for (width, word_panel) in [(720., false), (1200., false), (1600., false), (1200., true), (720., true)] {
+                ui.set_show_word(word_panel);
                 ui.window().set_size(slint::LogicalSize::new(width, 900.));
                 let snapshot = ui.window().take_snapshot().unwrap();
                 if let Ok(dir) = std::env::var("LAYOUT_SNAPSHOTS") {
                     std::fs::create_dir_all(&dir).unwrap();
                     let mut ppm = format!("P6\n{} {}\n255\n", snapshot.width(), snapshot.height()).into_bytes();
                     for pixel in snapshot.as_bytes().chunks_exact(4) { ppm.extend_from_slice(&pixel[..3]); }
-                    std::fs::write(format!("{dir}/columns-{count}-width-{width}.ppm"), ppm).unwrap();
+                    std::fs::write(format!("{dir}/columns-{count}-width-{width}-panel-{word_panel}.ppm"), ppm).unwrap();
                 }
                 let scrollers = ElementQuery::from_root(&ui).match_inherits("PairedColumn").find_all();
                 assert_eq!(scrollers.len(), 1, "all linked Bibles must use one scroller");
