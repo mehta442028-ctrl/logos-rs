@@ -26,7 +26,7 @@ pub fn import_docx(
         return Err("Translation code must have 2–16 ASCII letters, digits or underscores".into());
     }
     if name.trim().is_empty() { return Err("Translation name is required".into()); }
-    if !file.extension().is_some_and(|s| s.eq_ignore_ascii_case("docx")) {
+    if !file.extension().and_then(|s| s.to_str()).is_some_and(|s| s.eq_ignore_ascii_case("docx")) {
         return Err("Choose a .docx document".into());
     }
     // The DOCX is a ZIP archive. Read only document.xml, never execute macros
