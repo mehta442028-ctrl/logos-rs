@@ -631,6 +631,8 @@ export component MainWindow inherits Window {
     // --- data in from Rust ---
     in property <[TranslationItem]> translations;
     in property <[string]> translation-labels;
+    in property <[string]> visibility-options;
+    in-out property <bool> manage-translations;
     /// Which entry each picker starts on, so a restored session shows the
     /// text it actually opened.
     in property <int> primary-index;
@@ -701,6 +703,7 @@ export component MainWindow inherits Window {
     callback open-result(int);
     callback primary-changed(int);
     callback secondary-changed(int);
+    callback toggle-translation-visibility(int);
     callback extra-changed(int, int);
     callback add-translation();
     callback remove-translation();
@@ -944,6 +947,41 @@ export component MainWindow inherits Window {
                         padding: 10px;
                         spacing: 8px;
 
+                        // Translation selection and customizable visibility.
+                        Pill {
+                            label: root.manage-translations ? "Translations ✓" : "Manage translations";
+                            active: root.manage-translations;
+                            clicked => { root.manage-translations = !root.manage-translations; }
+                        }
+                        if root.manage-translations: Rectangle {
+                            height: 190px;
+                            background: Theme.panel-alt;
+                            VerticalLayout {
+                                padding: 5px;
+                                Text {
+                                    text: "Click to show/hide. Active columns cannot be hidden.";
+                                    color: Theme.muted;
+                                    font-size: 11px;
+                                    wrap: word-wrap;
+                                }
+                                ListView {
+                                    vertical-stretch: 1;
+                                    for item[i] in root.visibility-options: Rectangle {
+                                        height: 30px;
+                                        background: vis-touch.has-hover ? Theme.accent-bg : transparent;
+                                        Text {
+                                            text: item;
+                                            font-size: 12px;
+                                            color: Theme.text;
+                                            vertical-alignment: center;
+                                        }
+                                        vis-touch := TouchArea {
+                                            clicked => { root.toggle-translation-visibility(i); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         // translation pickers
                         Text { text: "Primary translation"; color: Theme.muted; font-size: 11px; }
                         ComboBox {
