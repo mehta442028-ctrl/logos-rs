@@ -156,8 +156,12 @@ pub fn align(conn: &Connection, tid: i64, lang: &str, ai: Option<&AiConfig>) -> 
                 scores.sort_by(|a,b| b.0.total_cmp(&a.0).then(a.1.cmp(b.1)));
                 if let Some(&(score,strong,method)) = scores.first() {
                     if scores.get(1).is_some_and(|second| score < second.0 * 1.8) { continue; }
-                    links.insert(i, words.iter().filter(|w| w.strongs == strong)
-                        .map(|w| Link { position:w.position,score,method }).collect());
+                    let occurrences: Vec<_> = words.iter().filter(|w| w.strongs == strong).collect();
+                    // A lexeme can occur repeatedly in a verse. Offline evidence
+                    // identifies its meaning, not which repeated occurrence.
+                    if occurrences.len() == 1 {
+                        links.insert(i, vec![Link { position:occurrences[0].position,score,method }]);
+                    }
                 }
             }
             if let Some(config) = ai {
@@ -165,7 +169,7 @@ pub fn align(conn: &Connection, tid: i64, lang: &str, ai: Option<&AiConfig>) -> 
                     ai_attempts += 1;
                     match ai_align(config,*reference,lang,&tokens,words) {
                         Ok(found) => { links.extend(found); report.ai_verses += 1; },
-                        Err(_) => { report.warning = "AI assistance stopped after an error; offline suggestions were retained.".into(); ai_failed = true; }
+                        Err(e) => { report.warning = format!("AI assistance stopped: {e}. Offline suggestions were retained."); ai_failed = true; }
                     }
                 }
             }
@@ -240,6 +244,12 @@ mod tests {
                     r#"{"links":[{"target":0,"sources":[0],"confidence":0.9},{"target":0,"sources":[3],"confidence":0.9}]}"#] {
             assert!(validate_ai(serde_json::from_str(bad).unwrap(),2,&originals).is_err());
         }
+    }
+    #[test]
+    fn repeated_original_occurrences_are_not_forced() {
+        let db = fixture("God");
+        db.execute("INSERT INTO words VALUES(1,1,1,1,2,'אֱלֹהִים','','H430','','noun')",[]).unwrap();
+        assert_eq!(align(&db,2,"en",None).unwrap().matched,0);
     }
     #[test]
     fn unicode_normalization() {
