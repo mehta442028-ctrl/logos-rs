@@ -1,12 +1,12 @@
 ; Inno Setup script for the LeVerbe Parallel Windows installer.
 ;   iscc /DAppVersion=1.2.3 /DSourceDir=<staged app dir> /DOutputDir=<dir> leverbe.iss
-; <staged app dir> holds LeVerbe ParallelParallel.exe and data\bible.db (see .github/workflows/release.yml).
+; <staged app dir> holds LeVerbeParallel.exe and data\bible.db (see .github/workflows/release.yml).
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\..\dist\LeVerbe Parallel"
+  #define SourceDir "..\..\dist\LeVerbeParallel"
 #endif
 #ifndef OutputDir
   #define OutputDir "..\..\dist"
@@ -21,9 +21,9 @@ AppPublisherURL=https://github.com/rmpr/logos-rs
 DefaultDirName={autopf}\LeVerbeParallel
 DefaultGroupName=LeVerbe Parallel
 DisableProgramGroupPage=yes
-UninstallDisplayIcon={app}\LeVerbe ParallelParallel.exe
+UninstallDisplayIcon={app}\LeVerbeParallel.exe
 OutputDir={#OutputDir}
-OutputBaseFilename=LeVerbe ParallelParallel-{#AppVersion}-windows-x64-setup
+OutputBaseFilename=LeVerbeParallel-{#AppVersion}-windows-x64-setup
 Compression=lzma2/max
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -40,12 +40,12 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#SourceDir}\LeVerbe ParallelParallel.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceDir}\LeVerbeParallel.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceDir}\data\bible.db"; DestDir: "{app}\data"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\LeVerbe Parallel"; Filename: "{app}\LeVerbe ParallelParallel.exe"
-Name: "{autodesktop}\LeVerbe Parallel"; Filename: "{app}\LeVerbe ParallelParallel.exe"; Tasks: desktopicon
+Name: "{autoprograms}\LeVerbe Parallel"; Filename: "{app}\LeVerbeParallel.exe"
+Name: "{autodesktop}\LeVerbe Parallel"; Filename: "{app}\LeVerbeParallel.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\LeVerbe ParallelParallel.exe"; Description: "{cm:LaunchProgram,LeVerbe Parallel}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\LeVerbeParallel.exe"; Description: "{cm:LaunchProgram,LeVerbe Parallel}"; Flags: nowait postinstall skipifsilent
