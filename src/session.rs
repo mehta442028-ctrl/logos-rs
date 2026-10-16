@@ -61,7 +61,7 @@ pub fn path() -> Option<PathBuf> {
     if let Ok(p) = std::env::var("LOGOS_SESSION") {
         return Some(PathBuf::from(p));
     }
-    directories::ProjectDirs::from("", "", "logos-rs")
+    directories::ProjectDirs::from("", "", "leverbe-parallel")
         .map(|d| d.config_dir().join("session.json"))
 }
 
