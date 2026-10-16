@@ -44,12 +44,12 @@ pub fn db_path() -> PathBuf {
 }
 
 /// The read-only database an installer put next to the executable:
-/// `<exe dir>/data/bible.db` (Windows) or `<prefix>/share/leverbe/bible.db`
+/// `<exe dir>/data/bible.db` (Windows) or `<prefix>/share/leverbe-parallel/bible.db`
 /// for an executable in `<prefix>/bin` (the .deb).
 fn bundled_db() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
     let dir = exe.parent()?;
-    let share = dir.join("..").join("share").join("leverbe");
+    let share = dir.join("..").join("share").join("leverbe-parallel");
     [dir.join("data").join("bible.db"), share.join("bible.db")]
         .into_iter()
         .find(|p| p.is_file())
