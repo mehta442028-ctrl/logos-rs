@@ -21,6 +21,8 @@ pub struct Session {
     pub secondary: String,
     /// Additional visible translations (third and fourth columns).
     pub extra_translations: Vec<String>,
+    /// Translation codes hidden from selection menus.
+    pub hidden_translations: Vec<String>,
     pub book: i64,
     pub chapter: i64,
     pub parallel: bool,
@@ -43,6 +45,7 @@ impl Default for Session {
             primary: String::new(),
             secondary: String::new(),
             extra_translations: Vec::new(),
+            hidden_translations: Vec::new(),
             book: 1,
             chapter: 1,
             parallel: false,
