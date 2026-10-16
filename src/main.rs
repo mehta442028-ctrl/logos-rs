@@ -1550,7 +1550,15 @@ mod layout_tests {
         for size in [11.,17.,28.,36.] {
             lib.set_text_size(size);
             lib.window().set_size(slint::LogicalSize::new(1000.,800.));
-            lib.window().take_snapshot().unwrap();
+            let snapshot=lib.window().take_snapshot().unwrap();
+            let text=ElementQuery::from_root(&lib).match_id("LibraryWindow::paragraph-text").find_first().unwrap();
+            assert!(text.size().width>200. && text.size().height>20.,"commentary text must have a visible reading area");
+            assert!(text.absolute_position().x+text.size().width<=1001.,"commentary text must wrap within window");
+            if size==28. && let Ok(dir)=std::env::var("LAYOUT_SNAPSHOTS") {
+                let mut ppm=format!("P6\n{} {}\n255\n",snapshot.width(),snapshot.height()).into_bytes();
+                for pixel in snapshot.as_bytes().chunks_exact(4) {ppm.extend_from_slice(&pixel[..3]);}
+                std::fs::write(format!("{dir}/commentary-library.ppm"),ppm).unwrap();
+            }
         }
 
     }

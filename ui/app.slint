@@ -1483,7 +1483,7 @@ export component MainWindow inherits Window {
                                     width: 100%;
                                     text: root.word.definition;
                                     color: Theme.muted;
-                                    font-size: 14px;
+                                    font-size: Theme.reading-size * 0.85;
                                     wrap: word-wrap;
                                 }
                                 if root.word.show-lxx: Text {
@@ -1581,7 +1581,7 @@ export component LibraryWindow inherits Window {
                 horizontal-stretch: 1;
                 min-width: 0px;
                 preferred-width: 0px;
-                for paragraph in root.paragraphs: Text {
+                for paragraph in root.paragraphs: paragraph-text := Text {
                     text: paragraph;
                     color: Theme.text;
                     font-size: root.text-size * 1px;
