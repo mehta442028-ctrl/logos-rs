@@ -23,7 +23,7 @@ fn norm(s: &str) -> String {
         .filter(|c| c.is_alphanumeric()).collect()
 }
 fn language(s: &str) -> &str {
-    match s { "no" | "nb-NO" | "bokmal" => "nb", "he" => "hbo", "el" => "grc", _ => s }
+    match s { "no" | "nb-no" | "bokmal" => "nb", "he" => "hbo", "el" => "grc", _ => s }
 }
 fn content(s: &str) -> bool {
     s.chars().count() > 2 && !["the","and","for","with","from","that","this","have","was","are","not","you","his","her","its","one","into","which","who","they","their","them","but","den","det","som","med","for","han","hun","til","fra","ikke","og"].contains(&s)
@@ -102,6 +102,7 @@ pub fn align(conn: &Connection, tid: i64, lang: &str, ai: Option<&AiConfig>) -> 
     let mut seeds: HashMap<(String,String), usize> = HashMap::new();
     let mut stmt = conn.prepare("SELECT w.text,w.strongs,t.lang FROM words w JOIN translations t ON t.id=w.translation_id
         WHERE w.strongs IS NOT NULL AND w.strongs<>'' AND t.id<>?1
+        AND t.id NOT IN (SELECT translation_id FROM personal_alignment_imports)
         AND t.code IN ('KJV','ULT','LSG','NB','WLC','SBLGNT')")?;
     for row in stmt.query_map([tid], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?)))? {
         let (text, strongs, l) = row?;

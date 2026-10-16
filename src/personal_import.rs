@@ -28,6 +28,8 @@ pub fn import_docx_aligned(
     source_db: &Path, file: &Path, code: &str, name: &str, lang: &str,
     ai: Option<&crate::auto_align::AiConfig>,
 ) -> Result<crate::auto_align::Report, Box<dyn std::error::Error>> {
+    let lang = lang.trim().to_lowercase();
+    let lang = lang.as_str();
     let code = code.trim().to_uppercase();
     if code.len() < 2 || code.len() > 16 || !code.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_') {
         return Err("Translation code must have 2–16 ASCII letters, digits or underscores".into());
