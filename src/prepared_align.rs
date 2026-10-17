@@ -87,7 +87,9 @@ pub fn apply(conn:&Connection,tid:i64,payload:&Payload)->Result<crate::auto_alig
 mod tests {
     use super::*;
     fn payload()->Payload {serde_json::from_value(serde_json::json!({"format":"leverbe-alignment","version":1,"language":"nb","verses":[{"book":1,"chapter":1,"verse":1,"tokens":["Gud"],"source":"WLC","links":[{"target":0,"sources":[{"position":0,"text":"אֱלֹהִים","strongs":"H430","morph":"HNcmpa"}],"reviewed":true,"method":"context-review"}],"issue":"Source has missing words"}]})).unwrap()}
-    #[test]fn reject_stale_tokens_and_duplicate_targets(){let mut p=payload();let verses=BTreeMap::from([((1,1,1),"Gud".into())]);validate(&p,&verses,"nb").unwrap();p.verses[0].tokens[0]="modified".into();assert!(validate(&p,&verses,"nb").is_err());}
+    #[test]fn reject_stale_tokens_and_duplicate_targets(){let mut p=payload();let verses=BTreeMap::from([((1,1,1),"Gud".into())]);validate(&p,&verses,"nb").unwrap();
+        let mut duplicate=payload();duplicate.verses[0].links.push(payload().verses.remove(0).links.remove(0));assert!(validate(&duplicate,&verses,"nb").is_err());
+        p.verses[0].tokens[0]="modified".into();assert!(validate(&p,&verses,"nb").is_err());}
     #[test]fn source_snapshot_must_match_and_links_are_persisted(){
         let db=Connection::open_in_memory().unwrap();db.execute_batch("CREATE TABLE translations(id INTEGER PRIMARY KEY,code TEXT,tagged INTEGER);CREATE TABLE words(translation_id INTEGER,book INTEGER,chapter INTEGER,verse INTEGER,position INTEGER,text TEXT,lemma TEXT,strongs TEXT,morph TEXT,parsing TEXT);INSERT INTO translations VALUES(1,'WLC',1),(2,'TEST',0);INSERT INTO words VALUES(1,1,1,1,0,'אֱלֹהִים','','H430','HNcmpa','');").unwrap();
         let p=payload();let report=apply(&db,2,&p).unwrap();assert_eq!(report.reviewed,1);assert_eq!(report.flagged,1);

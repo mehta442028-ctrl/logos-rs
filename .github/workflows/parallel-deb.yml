@@ -42,7 +42,9 @@ jobs:
       - name: Test
         env:
           LAYOUT_SNAPSHOTS: layout-snapshots
-        run: cargo test --release --locked
+        run: |
+          cargo test --release --locked
+          python3 tools/test_prepare_docx_alignment.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -37,15 +37,15 @@ SEEDS={
  'hånd':['H3027','G5495'],'hender':['H3027','G5495'],'hånden':['H3027','G5495'],
  'øye':['H5869','G3788'],'øyne':['H5869','G3788'],'øynene':['H5869','G3788'],
  'øre':['H241','G3775'],'ører':['H241','G3775'],'ord':['H1697','G3056','G4487'],
- 'ordet':['H1697','G3056','G4487'],'tro':['G4102'],'tror':['G4100'],'trodde':['G4100'],
+ 'ordet':['H1697','G3056','G4487'],'tro':['G4102','G4100'],'tror':['G4100'],'trodde':['G4100'],
  'kjærlighet':['G26'],'elsker':['H157','G25'],'elsket':['H157','G25'],
- 'synd':['H2403','G266'],'synden':['H2403','G266'],'synder':['H2403','G266'],
+ 'synd':['H2403','G266'],'synden':['H2403','G266'],'synder':['H2403','H2398','G266','G268','G264'],
  'lov':['H8451','G3551'],'loven':['H8451','G3551'],'fred':['H7965','G1515'],
  'nåde':['H2580','G5485'],'nåden':['H2580','G5485'],'sannhet':['H571','G225'],
  'sannheten':['H571','G225'],'legeme':['G4983'],'kropp':['G4983'],
  'verden':['H8398','G2889'],'rike':['H4438','H4467','G932'],'riket':['H4438','H4467','G932'],
  'begynnelsen':['H7225','G746'],'skapte':['H1254','G2936'],
- 'frelser':['H3467','G4990'],'disipler':['G3101'],'disiplene':['G3101'],
+ 'frelser':['H3467','G4990','G4982'],'disipler':['G3101'],'disiplene':['G3101'],
  'hellig':['H6944','H6918','G40'],'hellige':['H6944','H6918','G40'],
  'visdom':['H2451','G4678'],'visdommen':['H2451','G4678'],
 }
@@ -132,15 +132,22 @@ def embed(source,destination,payload):
     name='customXml/leverbeAlignment.xml';ns='http://schemas.openxmlformats.org/package/2006/relationships';ct='http://schemas.openxmlformats.org/package/2006/content-types'
     root=ET.Element('{urn:leverbe:alignment:1}alignment');root.text=json.dumps(payload,ensure_ascii=False,separators=(',',':'));xml=ET.tostring(root,encoding='utf-8',xml_declaration=True)
     with ZipFile(source) as src,ZipFile(destination,'w',ZIP_DEFLATED) as dst:
-        rels=ET.fromstring(src.read('word/_rels/document.xml.rels'));ids={r.attrib['Id'] for r in rels};n=1
+        rels_bytes=src.read('word/_rels/document.xml.rels');types_bytes=src.read('[Content_Types].xml')
+        rels=ET.fromstring(rels_bytes);ids={r.attrib['Id'] for r in rels};n=1
         while 'rIdLeVerbe'+str(n) in ids:n+=1
-        ET.SubElement(rels,'{'+ns+'}Relationship',Id='rIdLeVerbe'+str(n),Type='http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml',Target='../'+name)
-        types=ET.fromstring(src.read('[Content_Types].xml'));ET.SubElement(types,'{'+ct+'}Override',PartName='/'+name,ContentType='application/xml')
+        # Keep original package namespace declarations. Some Office readers reject
+        # otherwise-equivalent prefixed serializations of the OPC roots.
+        rel_child=f'<Relationship xmlns="{ns}" Id="rIdLeVerbe{n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml" Target="../{name}"/>'.encode()
+        type_child=f'<Override xmlns="{ct}" PartName="/{name}" ContentType="application/xml"/>'.encode()
+        rels_bytes=re.sub(rb'(</(?:[A-Za-z_][\w.-]*:)?Relationships\s*>)',lambda m:rel_child+m[0],rels_bytes,count=1)
+        types_bytes=re.sub(rb'(</(?:[A-Za-z_][\w.-]*:)?Types\s*>)',lambda m:type_child+m[0],types_bytes,count=1)
+        assert any(r.attrib.get('Target')=='../'+name for r in ET.fromstring(rels_bytes))
+        assert any(r.attrib.get('PartName')=='/'+name for r in ET.fromstring(types_bytes))
         for info in src.infolist():
             if info.filename==name:continue
             data=src.read(info.filename)
-            if info.filename=='word/_rels/document.xml.rels':data=ET.tostring(rels,encoding='utf-8',xml_declaration=True)
-            if info.filename=='[Content_Types].xml':data=ET.tostring(types,encoding='utf-8',xml_declaration=True)
+            if info.filename=='word/_rels/document.xml.rels':data=rels_bytes
+            if info.filename=='[Content_Types].xml':data=types_bytes
             dst.writestr(info,data)
         dst.writestr(name,xml)
     with ZipFile(source) as a,ZipFile(destination) as b:
