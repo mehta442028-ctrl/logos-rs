@@ -15,3 +15,5 @@ pub mod personal_import;
 pub mod auto_align;
 
 pub mod study;
+
+pub mod prepared_align;

@@ -276,3 +276,30 @@ Sources, SHA-256 pins, editions, notices and SWORD credits are in
 `data/study/sources.json`, also shipped with the package. The separate read-only
 `study-library.db` ensures library updates work even with a personal Bible database.
 Set `LEVERBE_LIBRARY` only to override its location for development.
+
+
+### Prepared connections inside a DOCX
+
+A prepared DOCX can carry `customXml/leverbeAlignment.xml`, an XML wrapper in
+`urn:leverbe:alignment:1` containing version-1 `leverbe-alignment` JSON. The normal
+importer recognizes it automatically. Prepared links take precedence over automatic
+alignment; unmatched words stay unlinked, and no AI request is made. Choose the
+language recorded in the document (for example `nb`).
+
+Each verse records exact whitespace-delimited target tokens and each linked
+original word's position, spelling, Strong's number and morphology. Import rejects
+changed target wording, duplicate/invalid positions and mismatching original
+editions, rolling back the transaction. Source warnings appear in word study.
+Context-review labels are author-supplied provenance, not a certification; automatic
+prepared suggestions remain visibly unreviewed.
+
+`tools/prepare_docx_alignment.py SOURCE.docx OUTPUT.docx --database BIBLE.db
+--language nb --report REPORT.json` prepares conservative lexical/corpus suggestions.
+An optional `--reviewed FILE.json` supplies explicitly reviewed, position-specific
+connections. This tool preserves every existing document part byte-for-byte except
+package relationship/content-type declarations, adding only invisible metadata.
+It excludes chapters with mismatched verse counts rather than guessing shifted
+references. Such exclusions require a separate, verified versification map.
+Do not publish copyrighted personal translation files or their embedded metadata
+to this repository. Preserve the source wording; flag omissions instead of filling
+them from another translation.

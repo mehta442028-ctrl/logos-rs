@@ -217,8 +217,15 @@ impl Bible {
             else {
                 let method: String = self.conn.query_row("SELECT method FROM personal_word_links WHERE translation_id=?1 AND book=?2 AND chapter=?3 AND verse=?4 AND target_position=?5 LIMIT 1",
                     rusqlite::params![tid,word.book,word.chapter,word.verse,word.position], |r| r.get(0))?;
-                format!("Unreviewed automatic suggestion ({}). Check the verse context.", if method == "ai-suggestion" { "AI-assisted" } else { "offline" })
+                match method.as_str() {
+                    "prepared-reviewed"=>"Prepared connection from a context-reviewed sample. Review provenance is supplied by the document author.".into(),
+                    "prepared-suggestion"=>"Unreviewed prepared suggestion. Check the verse context.".into(),
+                    _=>format!("Unreviewed automatic suggestion ({}). Check the verse context.", if method == "ai-suggestion" { "AI-assisted" } else { "offline" }),
+                }
             };
+        let has_notes:bool=self.conn.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='personal_alignment_notes')",[],|r|r.get(0))?;
+        let issue:String=if has_notes {self.conn.query_row("SELECT note FROM personal_alignment_notes WHERE translation_id=?1 AND book=?2 AND chapter=?3 AND verse=?4",rusqlite::params![tid,word.book,word.chapter,word.verse],|r|r.get(0)).unwrap_or_default()}else{String::new()};
+        let note=if issue.is_empty(){note}else{format!("{note}\nSource warning: {issue}")};
         Ok(Some((words,note)))
     }
 

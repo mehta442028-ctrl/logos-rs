@@ -8,9 +8,10 @@ use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 type Ref = (i64, i64, i64);
 type Error = Box<dyn std::error::Error>;
 #[derive(Default, Debug)]
-pub struct Report { pub verses: usize, pub words: usize, pub matched: usize, pub ai_verses: usize, pub warning: String }
+pub struct Report { pub prepared:bool, pub reviewed:usize, pub flagged:usize, pub verses: usize, pub words: usize, pub matched: usize, pub ai_verses: usize, pub warning: String }
 impl std::fmt::Display for Report {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.prepared {return write!(f,"Imported {} verses with prepared connections for {}/{} words ({} context-reviewed; other links are unreviewed suggestions). {} flagged verses. Unmatched words remain unlinked.",self.verses,self.matched,self.words,self.reviewed,self.flagged);}
         write!(f, "Imported {} verses. Suggested connections for {}/{} words; {} verses AI-assisted. Unmatched words remain unlinked. {}", self.verses, self.matched, self.words, self.ai_verses, self.warning)
     }
 }

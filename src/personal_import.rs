@@ -65,7 +65,8 @@ pub fn import_docx_aligned(
             remainder.split("{{field-off:bible}}").next().unwrap_or(remainder)
         } else { after };
         let selected = fields.replace_all(selected, "");
-        let selected = num.replace(&selected, "");
+        // A number INSIDE an explicit Bible field belongs to the scripture.
+        let selected = if after.to_lowercase().contains("{{field-on:bible}}") { selected.into_owned() } else { num.replace(&selected, "").into_owned() };
         let normalized = selected.split_whitespace().collect::<Vec<_>>().join(" ");
         if normalized.is_empty() { invalid += 1; continue; }
         let key = (book, chapter, verse);
@@ -74,6 +75,7 @@ pub fn import_docx_aligned(
     if verses.is_empty() { return Err("No supported Logos Bible verse milestones found".into()); }
     if invalid > 0 { return Err(format!("{invalid} invalid or empty milestones; no changes were saved").into()); }
 
+    let prepared = crate::prepared_align::read(file,&verses,lang)?;
     let personal = personal_db_path()?;
     if let Some(parent) = personal.parent() { std::fs::create_dir_all(parent)?; }
     // Copy once, never modify a packaged database under /usr/share. A personal
@@ -104,7 +106,7 @@ pub fn import_docx_aligned(
         statement.execute(params![tid,book,chapter,verse,value])?;
     }
     drop(statement);
-    let report = crate::auto_align::align(&tx, tid, lang.trim(), ai)?;
+    let report = if let Some(payload)=prepared { crate::prepared_align::apply(&tx,tid,&payload)? } else { crate::auto_align::align(&tx, tid, lang.trim(), ai)? };
     tx.execute_batch("INSERT INTO verses_fts(verses_fts) VALUES('rebuild');")?;
     tx.commit()?;
     Ok(report)
